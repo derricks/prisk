@@ -1,7 +1,8 @@
 /** Does various queries to determine overall risk for a given pull request. */
 
 var urlSlash = "/";
-var RESULTS_DIV_ID = "pr-buddy-overall-risk-results"
+var RESULTS_DIV_ID = "pr-buddy-overall-risk-results";
+var MINIMAL_SEARCH_RESULTS = "&per_page=1";
 
 function getResultsDiv() {
   return document.getElementById(RESULTS_DIV_ID);
@@ -57,7 +58,7 @@ function getTotalPRCountForRepo(documentUrl, callback) {
     callback(JSON.parse(xhr.response)["total_count"]);
   }
 
-  xhr.open('GET', searchApiRoot + "?q=" + encodeURIComponent(queryString));
+  xhr.open('GET', searchApiRoot + "?q=" + encodeURIComponent(queryString) + MINIMAL_SEARCH_RESULTS);
   xhr.send();
 }
 
@@ -77,7 +78,8 @@ function getAuthorPRPercentage(url, callback) {
         callback((JSON.parse(xhr.response)["total_count"]/totalPRCount) * 100);
       }
 
-      xhr.open('GET', getSearchAPIURL(url) + "?q=" + encodeURIComponent(queryString));
+      // no need to get lots of query results: we only care about the top-level count
+      xhr.open('GET', getSearchAPIURL(url) + "?q=" + encodeURIComponent(queryString) + MINIMAL_SEARCH_RESULTS);
       xhr.send();
     });
   });
