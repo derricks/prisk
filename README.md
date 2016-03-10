@@ -2,11 +2,13 @@
 Chrome plugin to add risk analysis to git PRs
 
 What's Implemented
-------------------
+==================
 
 What's Planned
---------------
+==============
+
 Provide a top-level risk analysis of PRs
+----------------------------------------
   * Author has contributed a small number of commits to code base (relative to total)
   * Author's PRs have a historic median of high numbers of comments
   * Number of lines changed
@@ -20,3 +22,7 @@ Provide a per-file (or per-diff) risk analysis
   * Stable files (this PR might perturb stability)
   * Sparkline for commits on file over time
   * White space as complexity approximation
+
+Misc.
+-----
+  * Support arbitrary domains so it can be used with github.com or enterprise github

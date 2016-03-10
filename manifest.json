@@ -1,0 +1,23 @@
+{
+  "manifest_version": 2,
+
+  "name": "git PR risk gauger",
+  "description": "Add risk analysis to git PRs",
+  "version": "1.0",
+  "author": "Derrick Schneider <derrick.schneider@opower.com>",
+
+  "content_scripts": [
+    {
+      "matches": ["http://github.va.opower.it/*", "https://github.va.opower.it/*"],
+      "js": ["overall_risk.js"]
+    }
+  ],
+
+  "permissions": [
+    "activeTab",
+    "http://github.va.opower.it/*",
+    "https://github.va.opower.it/*"
+  ]
+
+
+}
