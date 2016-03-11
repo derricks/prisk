@@ -7,12 +7,14 @@ var AUTHOR_NEWNESS_ID = "pr-buddy-author-newness-risk";
 var AUTHOR_REPUTATION_ID = "pr-buddy-author-reputation";
 var AVG_MAX_COMPLEXITY_ID = "pr-buddy-avg-max-complexity";
 var NUM_FILES_ID = "pr-buddy-num-files";
+var TOTAL_CHANGES_ID = "pr-buddy-total-changes";
 var FIRST_NON_WHITESPACE_REGEX = /[^\s]/;
 
 var FIELD_TO_DESCRIPTION = {};
 FIELD_TO_DESCRIPTION[AUTHOR_NEWNESS_ID] = "Author newness risk";
 FIELD_TO_DESCRIPTION[AVG_MAX_COMPLEXITY_ID] = "Avg. max complexity risk";
 FIELD_TO_DESCRIPTION[NUM_FILES_ID] = "Number of files risk";
+FIELD_TO_DESCRIPTION[TOTAL_CHANGES_ID] = "Total changes risk";
 
 function getResultsTable() {
   return document.getElementById(RESULTS_TABLE_ID);
@@ -60,17 +62,23 @@ function getSearchAPIURL(url) {
   return [getAPIRoot(url), "search", "issues"].join(URL_SLASH);
 }
 
-/** Determine the PR's author and send that back to the callback. */
-function getPRAuthor(url, callback) {
+/** Get PR Blob */
+function getPR(url, callback) {
   var prAPI = getPRAPIURL(url);
   var xhr = new XMLHttpRequest();
-
   xhr.onload = function() {
-    var response = JSON.parse(xhr.response);
-    callback(response["user"]["login"]);
+    callback(JSON.parse(xhr.response));
   }
   xhr.open('GET', prAPI);
   xhr.send();
+}
+
+/** Determine the PR's author and send that back to the callback. */
+function getPRAuthor(url, callback) {
+
+  getPR(url, function(prData) {
+    callback(prData["user"]["login"]);
+  });
 }
 
 /** Generate a query string for closed PRs in the org and repo. */
@@ -148,6 +156,8 @@ getAuthorPRPercentage(document.location.href, function(authorPercentage) {
 //   make cleaner and more clear
 var filesBucket = document.getElementById('files');
 var fileDiffs = filesBucket.getElementsByClassName('file');
+
+// fill in num files while we're at it, since the information we need is right there
 replaceFirstChildWithText(document.getElementById(NUM_FILES_ID), fileDiffs.length.toString());
 
 var maxComplexities = htmlCollectionMap( fileDiffs, function(file) {
@@ -182,3 +192,9 @@ var nonZeroComplexities = maxComplexities.filter( function(complexity) { return 
 var nonZeroComplexitiesSum = nonZeroComplexities.reduce( function( prev, current, _index, _array) { return prev + current; }, 0 );
 var complexityCell = document.getElementById(AVG_MAX_COMPLEXITY_ID);
 replaceFirstChildWithText(complexityCell, nonZeroComplexitiesSum/nonZeroComplexities.length);
+
+// TODO: the real way to do this is to get the PR blob and then kick off dependent tasks versus getting it twice
+getPR(window.location.href, function(prData) {
+  console.log(prData);
+  replaceFirstChildWithText(document.getElementById(TOTAL_CHANGES_ID), (prData.additions + prData.deletions).toString());
+});
