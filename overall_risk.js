@@ -6,11 +6,13 @@ var MINIMAL_SEARCH_RESULTS = "&per_page=1";
 var AUTHOR_NEWNESS_ID = "pr-buddy-author-newness-risk";
 var AUTHOR_REPUTATION_ID = "pr-buddy-author-reputation";
 var AVG_MAX_COMPLEXITY_ID = "pr-buddy-avg-max-complexity";
+var NUM_FILES_ID = "pr-buddy-num-files";
 var FIRST_NON_WHITESPACE_REGEX = /[^\s]/;
 
 var FIELD_TO_DESCRIPTION = {};
 FIELD_TO_DESCRIPTION[AUTHOR_NEWNESS_ID] = "Author newness risk";
-FIELD_TO_DESCRIPTION[AVG_MAX_COMPLEXITY_ID] = "Average diff complexity";
+FIELD_TO_DESCRIPTION[AVG_MAX_COMPLEXITY_ID] = "Avg. max complexity risk";
+FIELD_TO_DESCRIPTION[NUM_FILES_ID] = "Number of files risk";
 
 function getResultsTable() {
   return document.getElementById(RESULTS_TABLE_ID);
@@ -146,6 +148,7 @@ getAuthorPRPercentage(document.location.href, function(authorPercentage) {
 //   make cleaner and more clear
 var filesBucket = document.getElementById('files');
 var fileDiffs = filesBucket.getElementsByClassName('file');
+replaceFirstChildWithText(document.getElementById(NUM_FILES_ID), fileDiffs.length.toString());
 
 var maxComplexities = htmlCollectionMap( fileDiffs, function(file) {
   // the given diff represents an entire file, so iterate over additions
