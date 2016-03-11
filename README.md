@@ -12,6 +12,7 @@ Provide a top-level risk analysis of PRs
   * Author has contributed a small number of commits to code base (relative to total)
   * Author's PRs have a historic median of high numbers of comments
   * Number of lines changed
+  * Number of files
   * Volatile files are included
   * Average max complexity is high
   * Amount of test code vs. feature code
