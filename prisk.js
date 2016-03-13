@@ -47,9 +47,7 @@ var prisk = {
      });
 
      var nonZeroComplexities = maxComplexities.filter( function(complexity) { return complexity != 0;} );
-     console.log(nonZeroComplexities);
      var nonZeroComplexitiesSum = nonZeroComplexities.reduce( function( prev, current, _index, _array) { return prev + current; }, 0 );
-     console.log(nonZeroComplexitiesSum);
      return nonZeroComplexitiesSum/nonZeroComplexities.length;
    },
 
@@ -156,7 +154,10 @@ var prisk = {
      }
      console.log('risk value for ' + metric.id + ': ' + value.toString());
 
-     field.replaceChild(document.createTextNode(riskAssessment), field.firstChild);
+     var metricTextSpan = document.createElement('span');
+     metricTextSpan.setAttribute('class', 'prisk-risk-' + riskAssessment);
+     metricTextSpan.appendChild(document.createTextNode(riskAssessment));
+     field.replaceChild(metricTextSpan, field.firstChild);
   },
 
   /** Loads the PR JSON from the given URL.
@@ -233,14 +234,26 @@ var prisk = {
 
      var resultsTable = document.createElement('table');
      resultsTable.id = prisk.constants_.RESULTS_ID;
+     resultsTable.setAttribute('class', 'prisk-overall-table');
+
+     var titleRow = document.createElement('tr');
+     var titleHeader = document.createElement('th');
+     titleHeader.setAttribute('colspan', 2);
+     titleHeader.setAttribute('class', 'prisk-table-cell-defaults');
+     titleHeader.appendChild(document.createTextNode('PRisk Assessment'));
+
+     titleRow.appendChild(titleHeader);
+     resultsTable.appendChild(titleRow);
 
      Object.keys(prisk.constants_.FIELD_TO_DESCRIPTION).forEach( function(item) {
        var tr = document.createElement('tr');
        var descTd = document.createElement('td');
+       descTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
        descTd.appendChild(document.createTextNode(prisk.constants_.FIELD_TO_DESCRIPTION[item].description));
 
        var valueTd = document.createElement('td');
        valueTd.id = prisk.constants_.FIELD_TO_DESCRIPTION[item].id;
+       valueTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
        valueTd.appendChild(document.createTextNode('Loading'));
 
        tr.appendChild(descTd);

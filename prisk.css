@@ -1,0 +1,25 @@
+.prisk-overall-table {
+  border: 1px solid black;
+  text-align: left;
+  margin-top: 5px;
+}
+
+.prisk-table-cell-defaults {
+  padding: 6px 7px;
+}
+
+.prisk-text-default {
+  color: darkgray;
+}
+
+.prisk-risk-HIGH {
+  color: red;
+}
+
+.prisk-risk-MEDIUM {
+  color: yellow;
+}
+
+.prisk-risk-LOW {
+  color: lightgray;
+}
