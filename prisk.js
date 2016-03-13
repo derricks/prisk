@@ -287,28 +287,28 @@ var prisk = {
       // so that we can use the same logic here
       // as elsewhere (value <= goodValue = GOOD )
       AUTHOR_NEWNESS: {
-        id: 'prisk-author-newness-risk',
+        id: 'prisk-overall-author-newness-risk',
         description: 'Author experience risk',
         goodValue: 80,
         warnValue: 90
       },
 
       AVG_MAX_COMPLEXITY: {
-        id: 'pr-buddy-avg-max-complexity',
+        id: 'prisk-overall-avg-max-complexity-risk',
         description: 'Average max complexity risk',
         goodValue: 2,
-        warnValue: 4
+        warnValue: 3
       },
 
       NUM_FILES: {
-        id: 'pr-buddy-num-files',
+        id: 'prisk-overall-num-files-risk',
         description: 'Number of files risk',
         goodValue: 10,
         warnValue: 15
       },
 
       TOTAL_CHANGES: {
-        id: 'pr-buddy-total-changes',
+        id: 'prisk-overall-total-changes-risk',
         description: 'Total changes risk',
         goodValue: 150,
         warnValue: 215
