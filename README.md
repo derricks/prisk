@@ -7,6 +7,21 @@ of some things that might warrant extra time in the code review. This isn't a re
 for a thorough code review, just a set of flags that you should consider when
 doing a code review.
 
+Installing
+==========
+
+  1. Clone this repo
+  2. Visit chrome://extensions in your browser
+  3. Ensure "Developer mode" checkbox is checked
+  4. Click "Load unpacked extension..."
+  5. Select the directory where you cloned the repo
+
+Known Bugs
+==========
+
+  * When visiting a PR from the top-level "Pull Requests" page for a repo, the script doesn't run. Reload the page with the PR to make it run.
+  * Error handling is minimal.
+
 What Research?
 ==============
 Some of the work that has inspired and informed this:
@@ -14,6 +29,8 @@ Some of the work that has inspired and informed this:
   * Reading Beside the Lines: Indentation as a Proxy for Complexity Metrics - Abram Hindle, Michael Godfrey, Richard Holt
   * _Your Code As a Crime Scene_, Adam Tornhill
   * Reexamining the Fault Density - Component Size Connection - Les Hatton
+  * Investigating Code Review Practices in Defective Files: An Empirical Study of the Qt System -
+    Patanamon Thongtanunam, Shane McIntosh, Ahmed E. Hassan, Hajimu Iida
 
 
 What's Implemented
