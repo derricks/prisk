@@ -1,4 +1,4 @@
-.prisk-overall-table {
+.prisk-table {
   border: 1px solid black;
   text-align: left;
   margin-top: 5px;
@@ -17,7 +17,7 @@
 }
 
 .prisk-risk-MEDIUM {
-  color: yellow;
+  color: #FFCC00;
 }
 
 .prisk-risk-LOW {
