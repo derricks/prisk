@@ -47,9 +47,15 @@ The following risk factors are currently called out:
       number of unique indents within the diff.       
     * The total number of changes (additions + deletions)
       The more changes, the harder it is for a reviewer to give careful consideration to them all.
-    * The number of affected files
+    * The number of affected files.
       The more files that have changed, the more likely there are defects and the harder it is for
       a reviewer to keep the whole set of changes in their head.
+
+
+  * Diff-level risk assessments
+    * Maximum complexity within the diff, approximated by indents.
+    * File volatility. Files that have been updated a lot recently are more prone to defects.
+    * Author volatility. Files with numerous recent contributors are more prone to defects.
 
 What's Planned
 ==============
@@ -62,11 +68,7 @@ Provide a top-level risk analysis of PRs
 
 Provide a per-file (or per-diff) risk analysis
 ----------------------------------------------
-  * Volatile files
-  * Stable files (this PR might perturb stability)
   * Sparkline for commits on file over time
-  * White space as complexity approximation
-  * Number of authors of a given file
 
 Misc.
 -----
