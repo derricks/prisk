@@ -41,8 +41,7 @@ var prisk = {
    * @return {Float} the average max complexity of all the diffs.
    */
    calculateAverageMaxComplexity_: function() {
-     var filesBucket = document.getElementById(prisk.constants_.FILES_DIV);
-     var fileDiffs = filesBucket.getElementsByClassName(prisk.constants_.FILE_DIV);
+     var fileDiffs = prisk.getDiffElements_();
 
      var maxComplexities = prisk.htmlCollectionMap_( fileDiffs, function(file) {
        return prisk.getComplexityForDiffDiv_(file);
@@ -368,9 +367,7 @@ var prisk = {
    * @private
    */
   configureDiffsUI_: function() {
-    // retrieve the diffs
-    var filesContainer = document.getElementById(prisk.constants_.FILES_DIV);
-    var diffDivs = filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
+    var diffDivs = prisk.getDiffElements_();
     prisk.htmlCollectionForEach_(diffDivs, function(diff) {
 
       var diffHeaderDiv = diff.getElementsByClassName('file-info').item(0);
@@ -395,6 +392,21 @@ var prisk = {
       });
     });
 
+  },
+
+  /** Return an HTMLCollection of the diffs
+   *
+   */
+  getDiffElements_: function() {
+
+    var filesContainer = document.getElementById(prisk.constants_.FILES_DIV);
+    // TODO: why is this sometimes null?
+    // https://github.va.opower.it/x-web-widgets/widget-data-browser/pull/272
+    if (filesContainer == null) {
+      return [];
+    }
+
+    return filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
   },
 
   /** Creates the basic assessment table with a header and appends it to
