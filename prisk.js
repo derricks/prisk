@@ -53,6 +53,44 @@ var prisk = {
      return nonZeroComplexitiesSum/nonZeroComplexities.length;
    },
 
+   /** Calculate the volatility risk for the file mentioned in the diff,
+    *  and set the appropriate field with the value.
+    */
+   calculateAndShowFileVolatilityRisk_: function(diffElem) {
+     var fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
+     var fileName = fileNameElem.getAttribute('title');
+
+     // 90 days ago
+     var threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
+     git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
+       prisk.setRiskInDiff_(diffElem, results.length, prisk.constants_.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
+     });
+   },
+
+   /** Calculate the author volatility (too many recent contributors)
+    *  and update the appropriate field in the diff.
+    */
+   calculateAndShowAuthorVolatilityRisk_: function(diffElem) {
+     var threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
+     var fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
+     var fileName = fileNameElem.getAttribute('title');
+     git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
+
+       var authors = results.map( function(commit) {
+         return commit.commit.author.name;
+       });
+
+       var uniqueAuthors = [];
+       authors.forEach( function(author) {
+         uniqueAuthors[author] = true;
+       });
+
+
+       prisk.setRiskInDiff_(diffElem, Object.keys(uniqueAuthors).length, prisk.constants_.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
+     });
+   },
+
+
    /** Given a diff representing a file, return the maximum complexity
     * as defined by the number of unique indent levels, which is a stand-in
     * for McCabe complexity.
@@ -204,7 +242,7 @@ var prisk = {
      return riskAssessment;
    },
 
-  /** Iterate through all the file diffs and calculate relevant risk metrics.
+  /** Iterate through all the file diffs and relevant risk metrics.
    *
    * @private
    * @param {Object} the JSON data for the PR, as a convenience
@@ -215,6 +253,10 @@ var prisk = {
      prisk.htmlCollectionForEach_(diffs, function(diff) {
         var maxComplexity = prisk.getComplexityForDiffDiv_(diff);
         prisk.setRiskInDiff_(diff, maxComplexity, prisk.constants_.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
+
+        prisk.calculateAndShowFileVolatilityRisk_(diff);
+
+        prisk.calculateAndShowAuthorVolatilityRisk_(diff);
      });
    },
 
@@ -254,10 +296,18 @@ var prisk = {
    * @return {String} the API URL for this PR.
    */
   getPRAPIURL_: function(browserUrl) {
-    var url_parts = prisk.splitUrl_(browserUrl);
-    return [prisk.getAPIRootURL_(browserUrl), 'repos', url_parts[3], url_parts[4],
-           'pulls', url_parts[6]].join(prisk.constants_.URL_SLASH);
+    var urlParts = prisk.splitUrl_(browserUrl);
+    return [prisk.getRepoAPIURL_(browserUrl), 'pulls', urlParts[6]].join(prisk.constants_.URL_SLASH);
   },
+
+  /** Retrieve the repos URL for this PR URL.
+   *  e.g., https://github.va.opower.it/opower/archmage/pull/516
+   *     -> https://github.va.opower.it/repos/opower/archmage
+   */
+   getRepoAPIURL_: function(documentUrl) {
+     var urlParts = prisk.splitUrl_(documentUrl);
+     return [prisk.getAPIRootURL_(documentUrl), 'repos', urlParts[3], urlParts[4]].join(prisk.constants_.URL_SLASH);
+   },
 
    /** Get the search API URL as derived from the passed-in URL.
     *
@@ -386,6 +436,8 @@ var prisk = {
     riskElem.replaceChild(metricTextSpan, riskElem.firstChild);
   },
 
+  /**
+
   /** Gets the appropriate div ID for the panel
    *  where the results will be displayed.
    *  Implemented as a function to handle different div IDs
@@ -462,6 +514,20 @@ var prisk = {
         id: 'prisk-max-complexity-risk',
         description: 'Max complexity risk',
         goodValue: 5,
+        warnValue: 6
+      },
+
+      FILE_VOLATILITY_RISK: {
+        id: 'prisk-file-volatility-risk',
+        description: 'File volatility risk',
+        goodValue: 6,
+        warnValue: 9
+      },
+
+      AUTHOR_VOLATILITY_RISK: {
+        id: 'prisk-author-volatility-risk',
+        description: 'Author volatility risk',
+        goodValue: 4,
         warnValue: 6
       }
     }

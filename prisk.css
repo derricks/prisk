@@ -6,6 +6,16 @@
 
 .prisk-table-cell-defaults {
   padding: 6px 7px;
+
+  /* copied from github to ensure consistency across tables */
+  font: 13px/1.4 Helvetica, arial, nimbussansl, liberationsans, freesans, clean, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  font-stretch: normal;
+  font-size: 13px;
+  line-height: 1.4;
+  font-family: Helvetica, arial, nimbussansl, liberationsans, freesans, clean, sans-serif, 'Segoe UI Emoji', 'Segoe UI Symbol';
 }
 
 .prisk-text-default {
