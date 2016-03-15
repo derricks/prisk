@@ -18,16 +18,18 @@ var prisk = {
       prisk.mergedSearchQuery = 'type:pr is:merged repo:' + prisk.pr_org + prisk.constants_.URL_SLASH + prisk.pr_repo;
 
       // fill in the "total changes" risk value, which is just the sum of additions/deletions
-      prisk.setMetricField_(prisk.constants_.FIELD_TO_DESCRIPTION.TOTAL_CHANGES,
+      prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.TOTAL_CHANGES,
                               prData.additions + prData.deletions);
       // changed files
-      prisk.setMetricField_(prisk.constants_.FIELD_TO_DESCRIPTION.NUM_FILES, prData.changed_files);
+      prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.NUM_FILES, prData.changed_files);
 
       prisk.showAuthorNewness_(prData.user.login);
+
+      prisk.loadDiffRisks_(prData);
     });
 
     // with that kicked off, calculate the average max complexity
-    prisk.setMetricField_(prisk.constants_.FIELD_TO_DESCRIPTION.AVG_MAX_COMPLEXITY,
+    prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.AVG_MAX_COMPLEXITY,
       prisk.calculateAverageMaxComplexity_());
   },
 
@@ -39,8 +41,8 @@ var prisk = {
    * @return {Float} the average max complexity of all the diffs.
    */
    calculateAverageMaxComplexity_: function() {
-     var filesBucket = document.getElementById('files');
-     var fileDiffs = filesBucket.getElementsByClassName('file');
+     var filesBucket = document.getElementById(prisk.constants_.FILES_DIV);
+     var fileDiffs = filesBucket.getElementsByClassName(prisk.constants_.FILE_DIV);
 
      var maxComplexities = prisk.htmlCollectionMap_( fileDiffs, function(file) {
        return prisk.getComplexityForDiffDiv_(file);
@@ -102,6 +104,20 @@ var prisk = {
      return returnValue;
    },
 
+   /** Given an HTMLCollection, iterate over the each item and call
+    *  the callback function with that item.
+    *
+    * @private
+    * @param {HTMLCollection} collection
+    * @param {Function} the function to invoke with each item
+    */
+   htmlCollectionForEach_: function(collection, forEachFunction) {
+     for (var collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
+       forEachFunction(collection.item(collectionIndex));
+     }
+   },
+
+
   /** Sets the metric for an author's newness, which is defined as 100 -
    *  the percentage of merged PRs authored by this person.
    *  The subtraction is to make the logic consistent for calculating
@@ -126,7 +142,7 @@ var prisk = {
 
        prisk.loadJsonFromUrl_(allRepoPRsUrl, function(allPRSearchData) {
          var totalCount = allPRSearchData.total_count;
-         prisk.setMetricField_(prisk.constants_.FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
+         prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
        });
      });
   },
@@ -144,21 +160,63 @@ var prisk = {
        return;
      }
 
+     var riskAssessment = prisk.getRiskAssessment_(value, metric);
+     console.log('risk value for ' + metric.id + ': ' + value.toString());
+
+     prisk.setRiskAssessmentCell_(field, riskAssessment);
+  },
+
+  /** Sets the risk value for a given metric within a particular diff.
+   * @private
+   * @param {Element} diff containing the information
+   * @param {Number} the value of the risk assessment to be used
+   * @param {Object} the general information for this risk assessment
+   */
+  setRiskInDiff_: function(diff, riskValue, riskConfiguration) {
+    var riskFieldId = diff.id + '-' + riskConfiguration.id;
+    var riskField = document.getElementById(riskFieldId);
+    var riskAssessment = prisk.getRiskAssessment_(riskValue, riskConfiguration);
+
+    console.log('risk value for ' + riskConfiguration.id + ' in ' + diff.id + ': ' + riskValue.toString());
+
+    // todo: refactor
+    prisk.setRiskAssessmentCell_(riskField, riskAssessment);
+  },
+
+  /** Given a risk assessment value and the configuration for that risk
+   * assessment, return the risk assessment as a text field.
+   *
+   * @private
+   * @param {Number} the value of the risk metric
+   * @param {Object} the configuration for that risk metric
+   * @return {String} the risk assessment for that value based on the configuration
+   */
+   getRiskAssessment_: function(value, configuration) {
      var riskAssessment = 'LOW';
-     if (value > metric.goodValue && value <= metric.warnValue) {
+     if (value >= configuration.goodValue && value < configuration.warnValue) {
        riskAssessment = 'MEDIUM';
      }
 
-     if (value > metric.warnValue) {
+     if (value >= configuration.warnValue) {
        riskAssessment = 'HIGH';
      }
-     console.log('risk value for ' + metric.id + ': ' + value.toString());
 
-     var metricTextSpan = document.createElement('span');
-     metricTextSpan.setAttribute('class', 'prisk-risk-' + riskAssessment);
-     metricTextSpan.appendChild(document.createTextNode(riskAssessment));
-     field.replaceChild(metricTextSpan, field.firstChild);
-  },
+     return riskAssessment;
+   },
+
+  /** Iterate through all the file diffs and calculate relevant risk metrics.
+   *
+   * @private
+   * @param {Object} the JSON data for the PR, as a convenience
+   */
+  loadDiffRisks_: function(prData) {
+     var fileBucket = document.getElementById(prisk.constants_.FILES_DIV);
+     var diffs = fileBucket.getElementsByClassName(prisk.constants_.FILE_DIV);
+     prisk.htmlCollectionForEach_(diffs, function(diff) {
+        var maxComplexity = prisk.getComplexityForDiffDiv_(diff);
+        prisk.setRiskInDiff_(diff, maxComplexity, prisk.constants_.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
+     });
+   },
 
   /** Loads the PR JSON from the given URL.
    *
@@ -232,35 +290,100 @@ var prisk = {
   configureUI_: function() {
      var headerPane = document.getElementById(prisk.getPRPanelId_());
 
-     var resultsTable = document.createElement('table');
+     var resultsTable = prisk.appendRiskTableToDiff_(headerPane, 'PRisk Overall Assessment');
      resultsTable.id = prisk.constants_.RESULTS_ID;
-     resultsTable.setAttribute('class', 'prisk-overall-table');
 
-     var titleRow = document.createElement('tr');
-     var titleHeader = document.createElement('th');
-     titleHeader.setAttribute('colspan', 2);
-     titleHeader.setAttribute('class', 'prisk-table-cell-defaults');
-     titleHeader.appendChild(document.createTextNode('PRisk Assessment'));
-
-     titleRow.appendChild(titleHeader);
-     resultsTable.appendChild(titleRow);
-
-     Object.keys(prisk.constants_.FIELD_TO_DESCRIPTION).forEach( function(item) {
+     Object.keys(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION).forEach( function(item) {
        var tr = document.createElement('tr');
        var descTd = document.createElement('td');
        descTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
-       descTd.appendChild(document.createTextNode(prisk.constants_.FIELD_TO_DESCRIPTION[item].description));
+       descTd.appendChild(document.createTextNode(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION[item].description));
 
        var valueTd = document.createElement('td');
-       valueTd.id = prisk.constants_.FIELD_TO_DESCRIPTION[item].id;
+       valueTd.id = prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION[item].id;
        valueTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
-       valueTd.appendChild(document.createTextNode('Loading'));
+       valueTd.appendChild(document.createTextNode(prisk.constants_.LOADING_STATUS));
 
        tr.appendChild(descTd);
        tr.appendChild(valueTd);
        resultsTable.appendChild(tr);
      });
      headerPane.appendChild(resultsTable);
+
+     prisk.configureDiffsUI_();
+  },
+
+  /** Adds a risk assessment panel to each of the diffs.
+   *
+   * @private
+   */
+  configureDiffsUI_: function() {
+    // retrieve the diffs
+    var filesContainer = document.getElementById(prisk.constants_.FILES_DIV);
+    var diffDivs = filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
+    prisk.htmlCollectionForEach_(diffDivs, function(diff) {
+
+      var diffHeaderDiv = diff.getElementsByClassName('file-info').item(0);
+      var diffRiskTable = prisk.appendRiskTableToDiff_(diffHeaderDiv, 'PRisk Diff Assessment');
+
+      // for each of the per-diff fields, add a row
+      Object.keys(prisk.constants_.DIFF_FIELD_TO_DESCRIPTION).forEach(function(riskMetricConfiguration) {
+        var riskMetric = prisk.constants_.DIFF_FIELD_TO_DESCRIPTION[riskMetricConfiguration];
+
+        var tr = document.createElement('tr');
+        var description = document.createElement('td');
+        description.setAttribute('class', 'prisk-table-cell-defaults prisk-text-default');
+        description.appendChild(document.createTextNode(riskMetric.description));
+        tr.appendChild(description);
+
+        var risk = document.createElement('td');
+        risk.id = diff.id + '-' + riskMetric.id;
+        risk.setAttribute('class', 'prisk-table-cell-defaults prisk-text-default');
+        risk.appendChild(document.createTextNode(prisk.constants_.LOADING_STATUS));
+        tr.appendChild(risk);
+        diffRiskTable.appendChild(tr);
+      });
+    });
+
+  },
+
+  /** Creates the basic assessment table with a header and appends it to
+   *  the specified diff.
+   *
+   * @private
+   * @param {Element} diff to append the table to
+   * @param {String} table name
+   * @return {Element} the newly-created table element
+   */
+  appendRiskTableToDiff_: function(diffDiv, tableName) {
+
+    var diffRiskTable = document.createElement('table');
+    diffRiskTable.setAttribute('class', 'prisk-table');
+
+    var headerRow = document.createElement('tr');
+    var header = document.createElement('th');
+    header.setAttribute('class', 'prisk-table-cell-defaults');
+    header.setAttribute('colspan', '2');
+    header.appendChild(document.createTextNode(tableName));
+
+    headerRow.appendChild(header);
+    diffRiskTable.appendChild(headerRow);
+    diffDiv.appendChild(diffRiskTable);
+    return diffRiskTable;
+  },
+
+  /** Sets the specified element to have risk assessment text
+   * of the correct styling.
+   *
+   * @private
+   * @param {Element} element to update
+   * @param {String} risk assessment as a string
+   */
+  setRiskAssessmentCell_: function(riskElem, riskAssessment) {
+    var metricTextSpan = document.createElement('span');
+    metricTextSpan.setAttribute('class', 'prisk-risk-' + riskAssessment);
+    metricTextSpan.appendChild(document.createTextNode(riskAssessment));
+    riskElem.replaceChild(metricTextSpan, riskElem.firstChild);
   },
 
   /** Gets the appropriate div ID for the panel
@@ -290,8 +413,11 @@ var prisk = {
     RESULTS_ID: 'prisk-overall-risk-results',
     MINIMAL_SEARCH_RESULTS: '&per_page=1',
     FIRST_NON_WHITESPACE_REGEX: /[^\s]/,
+    FILES_DIV: 'files',
+    FILE_DIV: 'file',
+    LOADING_STATUS: 'Loading',
 
-    FIELD_TO_DESCRIPTION: {
+    OVERALL_FIELD_TO_DESCRIPTION: {
       // Sets up the details for each risk, keyed by the ID of the field that
       // will be populated.
 
@@ -325,6 +451,18 @@ var prisk = {
         description: 'Total changes risk',
         goodValue: 150,
         warnValue: 215
+      }
+    },
+
+    // the fields to use for populating per-diff risks
+    // note that IDs in here are prefixed with the id
+    // of the diff
+    DIFF_FIELD_TO_DESCRIPTION: {
+      MAX_COMPLEXITY: {
+        id: 'prisk-max-complexity-risk',
+        description: 'Max complexity risk',
+        goodValue: 5,
+        warnValue: 6
       }
     }
 
