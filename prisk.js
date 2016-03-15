@@ -461,8 +461,8 @@ var prisk = {
       MAX_COMPLEXITY: {
         id: 'prisk-max-complexity-risk',
         description: 'Max complexity risk',
-        goodValue: 3,
-        warnValue: 4
+        goodValue: 5,
+        warnValue: 6
       }
     }
 
