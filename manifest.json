@@ -9,7 +9,7 @@
   "content_scripts": [
     {
       "matches": ["http://github.va.opower.it/*", "https://github.va.opower.it/*"],
-      "js": ["git_helper.js", "prisk.js"],
+      "js": ["config.js", "git_helper.js", "prisk.js"],
       "css": ["prisk.css"]
     }
   ],
