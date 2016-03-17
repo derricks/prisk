@@ -18,10 +18,10 @@ var prisk = {
       prisk.mergedSearchQuery = 'type:pr is:merged repo:' + prisk.pr_org + prisk.constants_.URL_SLASH + prisk.pr_repo;
 
       // fill in the "total changes" risk value, which is just the sum of additions/deletions
-      prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.TOTAL_CHANGES,
+      prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.TOTAL_CHANGES,
                               prData.additions + prData.deletions);
       // changed files
-      prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.NUM_FILES, prData.changed_files);
+      prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.NUM_FILES, prData.changed_files);
 
       prisk.showAuthorNewness_(prData.user.login);
 
@@ -29,7 +29,7 @@ var prisk = {
     });
 
     // with that kicked off, calculate the average max complexity
-    prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.AVG_MAX_COMPLEXITY,
+    prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.AVG_MAX_COMPLEXITY,
       prisk.calculateAverageMaxComplexity_());
   },
 
@@ -62,7 +62,7 @@ var prisk = {
      // 90 days ago
      var threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
-       prisk.setRiskInDiff_(diffElem, results.length, prisk.constants_.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
+       prisk.setRiskInDiff_(diffElem, results.length, config.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
      });
    },
 
@@ -85,7 +85,7 @@ var prisk = {
        });
 
 
-       prisk.setRiskInDiff_(diffElem, Object.keys(uniqueAuthors).length, prisk.constants_.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
+       prisk.setRiskInDiff_(diffElem, Object.keys(uniqueAuthors).length, config.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
      });
    },
 
@@ -179,7 +179,7 @@ var prisk = {
 
        prisk.loadJsonFromUrl_(allRepoPRsUrl, function(allPRSearchData) {
          var totalCount = allPRSearchData.total_count;
-         prisk.setMetricField_(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
+         prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
        });
      });
   },
@@ -228,6 +228,7 @@ var prisk = {
    * @param {Object} the configuration for that risk metric
    * @return {String} the risk assessment for that value based on the configuration
    */
+   //TODO: just return the value from the ifs
    getRiskAssessment_: function(value, configuration) {
      var riskAssessment = 'LOW';
      if (value >= configuration.goodValue && value < configuration.warnValue) {
@@ -251,7 +252,7 @@ var prisk = {
      var diffs = fileBucket.getElementsByClassName(prisk.constants_.FILE_DIV);
      prisk.htmlCollectionForEach_(diffs, function(diff) {
         var maxComplexity = prisk.getComplexityForDiffDiv_(diff);
-        prisk.setRiskInDiff_(diff, maxComplexity, prisk.constants_.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
+        prisk.setRiskInDiff_(diff, maxComplexity, config.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
 
         prisk.calculateAndShowFileVolatilityRisk_(diff);
 
@@ -342,14 +343,14 @@ var prisk = {
      var resultsTable = prisk.appendRiskTableToDiff_(headerPane, 'PRisk Overall Assessment');
      resultsTable.id = prisk.constants_.RESULTS_ID;
 
-     Object.keys(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION).forEach( function(item) {
+     Object.keys(config.OVERALL_FIELD_TO_DESCRIPTION).forEach( function(item) {
        var tr = document.createElement('tr');
        var descTd = document.createElement('td');
        descTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
-       descTd.appendChild(document.createTextNode(prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION[item].description));
+       descTd.appendChild(document.createTextNode(config.OVERALL_FIELD_TO_DESCRIPTION[item].description));
 
        var valueTd = document.createElement('td');
-       valueTd.id = prisk.constants_.OVERALL_FIELD_TO_DESCRIPTION[item].id;
+       valueTd.id = config.OVERALL_FIELD_TO_DESCRIPTION[item].id;
        valueTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
        valueTd.appendChild(document.createTextNode(prisk.constants_.LOADING_STATUS));
 
@@ -374,8 +375,8 @@ var prisk = {
       var diffRiskTable = prisk.appendRiskTableToDiff_(diffHeaderDiv, 'PRisk Diff Assessment');
 
       // for each of the per-diff fields, add a row
-      Object.keys(prisk.constants_.DIFF_FIELD_TO_DESCRIPTION).forEach(function(riskMetricConfiguration) {
-        var riskMetric = prisk.constants_.DIFF_FIELD_TO_DESCRIPTION[riskMetricConfiguration];
+      Object.keys(config.DIFF_FIELD_TO_DESCRIPTION).forEach(function(riskMetricConfiguration) {
+        var riskMetric = config.DIFF_FIELD_TO_DESCRIPTION[riskMetricConfiguration];
 
         var tr = document.createElement('tr');
         var description = document.createElement('td');
@@ -479,71 +480,7 @@ var prisk = {
     FIRST_NON_WHITESPACE_REGEX: /[^\s]/,
     FILES_DIV: 'files',
     FILE_DIV: 'file',
-    LOADING_STATUS: 'Loading',
-
-    OVERALL_FIELD_TO_DESCRIPTION: {
-      // Sets up the details for each risk, keyed by the ID of the field that
-      // will be populated.
-
-      // Note that for newness, the values represent
-      // 100 (max percentage) - the risk factor
-      // so that we can use the same logic here
-      // as elsewhere (value <= goodValue = GOOD )
-      AUTHOR_NEWNESS: {
-        id: 'prisk-overall-author-newness-risk',
-        description: 'Author experience risk',
-        goodValue: 80,
-        warnValue: 90
-      },
-
-      AVG_MAX_COMPLEXITY: {
-        id: 'prisk-overall-avg-max-complexity-risk',
-        description: 'Average max complexity risk',
-        goodValue: 2,
-        warnValue: 3
-      },
-
-      NUM_FILES: {
-        id: 'prisk-overall-num-files-risk',
-        description: 'Number of files risk',
-        goodValue: 10,
-        warnValue: 15
-      },
-
-      TOTAL_CHANGES: {
-        id: 'prisk-overall-total-changes-risk',
-        description: 'Total changes risk',
-        goodValue: 150,
-        warnValue: 215
-      }
-    },
-
-    // the fields to use for populating per-diff risks
-    // note that IDs in here are prefixed with the id
-    // of the diff
-    DIFF_FIELD_TO_DESCRIPTION: {
-      MAX_COMPLEXITY: {
-        id: 'prisk-max-complexity-risk',
-        description: 'Max complexity risk',
-        goodValue: 5,
-        warnValue: 6
-      },
-
-      FILE_VOLATILITY_RISK: {
-        id: 'prisk-file-volatility-risk',
-        description: 'File volatility risk',
-        goodValue: 6,
-        warnValue: 9
-      },
-
-      AUTHOR_VOLATILITY_RISK: {
-        id: 'prisk-author-volatility-risk',
-        description: 'Author volatility risk',
-        goodValue: 4,
-        warnValue: 6
-      }
-    }
-
+    LOADING_STATUS: 'Loading'
   }
 };
 
