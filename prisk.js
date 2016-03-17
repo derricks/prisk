@@ -216,7 +216,6 @@ var prisk = {
 
     console.log('risk value for ' + riskConfiguration.id + ' in ' + diff.id + ': ' + riskValue.toString());
 
-    // todo: refactor
     prisk.setRiskAssessmentCell_(riskField, riskAssessment);
   },
 
@@ -230,16 +229,15 @@ var prisk = {
    */
    //TODO: just return the value from the ifs
    getRiskAssessment_: function(value, configuration) {
-     var riskAssessment = 'LOW';
      if (value >= configuration.goodValue && value < configuration.warnValue) {
-       riskAssessment = 'MEDIUM';
+       return 'MEDIUM';
      }
 
      if (value >= configuration.warnValue) {
-       riskAssessment = 'HIGH';
+       return 'HIGH';
      }
 
-     return riskAssessment;
+     return 'LOW';
    },
 
   /** Iterate through all the file diffs and relevant risk metrics.
