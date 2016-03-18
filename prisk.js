@@ -41,9 +41,9 @@ var prisk = {
    * @return {Float} the average max complexity of all the diffs.
    */
    calculateAverageMaxComplexity_: function() {
-     var fileDiffs = prisk.getDiffElements_();
 
-     var maxComplexities = prisk.htmlCollectionMap_( fileDiffs, function(file) {
+     var fileDiffs = prisk.getDiffElements_();
+     var maxComplexities = fileDiffs.map( function(file) {
        return prisk.getComplexityForDiffDiv_(file);
      });
 
@@ -71,8 +71,7 @@ var prisk = {
     */
    calculateAndShowAuthorVolatilityRisk_: function(diffElem) {
      var threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
-     var fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
-     var fileName = fileNameElem.getAttribute('title');
+     var fileName = prisk.getFileNameForDiff_(diffElem);
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
        var authors = results.map( function(commit) {
@@ -84,9 +83,13 @@ var prisk = {
          uniqueAuthors[author] = true;
        });
 
-
        prisk.setRiskInDiff_(diffElem, Object.keys(uniqueAuthors).length, config.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
      });
+   },
+
+   getFileNameForDiff_: function(diffElem) {
+     var fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
+     return fileNameElem.getAttribute('title');
    },
 
 
@@ -140,6 +143,23 @@ var prisk = {
      }
      return returnValue;
    },
+
+   /** Filter out elements from an HTMLCollection that don't pass
+    *  the filter function. If filter function returns true, the item
+    *  is included.
+    *
+    * @param {HTMLCollection} the HTMLCollection to filter
+    * @return {Array} the items that have passed the filter function
+    */
+    htmlCollectionFilter_: function(collection, filterFunction) {
+      var returnValue = [];
+      prisk.htmlCollectionForEach_(collection, function(item) {
+        if (filterFunction(item)) {
+          returnValue.push(item);
+        }
+      });
+      return returnValue;
+    },
 
    /** Given an HTMLCollection, iterate over the each item and call
     *  the callback function with that item.
@@ -246,15 +266,14 @@ var prisk = {
    * @param {Object} the JSON data for the PR, as a convenience
    */
   loadDiffRisks_: function(prData) {
-     var fileBucket = document.getElementById(prisk.constants_.FILES_DIV);
-     var diffs = fileBucket.getElementsByClassName(prisk.constants_.FILE_DIV);
-     prisk.htmlCollectionForEach_(diffs, function(diff) {
-        var maxComplexity = prisk.getComplexityForDiffDiv_(diff);
-        prisk.setRiskInDiff_(diff, maxComplexity, config.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
+     var diffs = prisk.getDiffElements_();
+     diffs.forEach(function(diffElem) {
+        var maxComplexity = prisk.getComplexityForDiffDiv_(diffElem);
+        prisk.setRiskInDiff_(diffElem, maxComplexity, config.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
 
-        prisk.calculateAndShowFileVolatilityRisk_(diff);
+        prisk.calculateAndShowFileVolatilityRisk_(diffElem);
 
-        prisk.calculateAndShowAuthorVolatilityRisk_(diff);
+        prisk.calculateAndShowAuthorVolatilityRisk_(diffElem);
      });
    },
 
@@ -367,7 +386,9 @@ var prisk = {
    */
   configureDiffsUI_: function() {
     var diffDivs = prisk.getDiffElements_();
-    prisk.htmlCollectionForEach_(diffDivs, function(diff) {
+
+    // diffDivs is an array, because that's what getDiffElements_ returns
+    diffDivs.forEach( function(diff) {
 
       var diffHeaderDiv = diff.getElementsByClassName('file-info').item(0);
       var diffRiskTable = prisk.appendRiskTableToDiff_(diffHeaderDiv, 'PRisk Diff Assessment');
@@ -393,7 +414,7 @@ var prisk = {
 
   },
 
-  /** Return an HTMLCollection of the diffs
+  /** Return an array of the diff elements
    *
    */
   getDiffElements_: function() {
@@ -405,7 +426,17 @@ var prisk = {
       return [];
     }
 
-    return filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
+    var fileElems = filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
+
+    return prisk.htmlCollectionFilter_(fileElems, function excludeRegexes(fileElem) {
+
+      // if there's a regex that matches the string, that string should be included.
+      var foundMatch = config.excludedFileRegexes.find( function findMatch(regex) {
+        return regex.exec(prisk.getFileNameForDiff_(fileElem)) !== null;
+      });
+
+      return foundMatch === undefined;
+    });
   },
 
   /** Creates the basic assessment table with a header and appends it to
