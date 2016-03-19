@@ -1,4 +1,11 @@
 var config = {
+  // an array of regexes to use for filtering out
+  // files. Any diff whose file is matched by any
+  // regex in this list will not get a per-diff
+  // risk assessment and will not be included
+  // in averages across diffs
+  excludedFileRegexes: [/.md$/i],
+
   OVERALL_FIELD_TO_DESCRIPTION: {
     // Sets up the details for each risk, keyed by the ID of the field that
     // will be populated.
