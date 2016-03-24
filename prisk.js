@@ -42,13 +42,13 @@ var prisk = {
    */
    calculateAverageMaxComplexity_: function() {
 
-     var fileDiffs = prisk.getDiffElements_();
-     var maxComplexities = fileDiffs.map( function(file) {
+     const fileDiffs = prisk.getDiffElements_();
+     const maxComplexities = fileDiffs.map( function(file) {
        return prisk.getComplexityForDiffDiv_(file);
      });
 
-     var nonZeroComplexities = maxComplexities.filter( function(complexity) { return complexity != 0;} );
-     var nonZeroComplexitiesSum = nonZeroComplexities.reduce( function( prev, current, _index, _array) { return prev + current; }, 0 );
+     const nonZeroComplexities = maxComplexities.filter( function(complexity) { return complexity != 0;} );
+     const nonZeroComplexitiesSum = nonZeroComplexities.reduce( function( prev, current, _index, _array) { return prev + current; }, 0 );
      return nonZeroComplexitiesSum/nonZeroComplexities.length;
    },
 
@@ -56,11 +56,10 @@ var prisk = {
     *  and set the appropriate field with the value.
     */
    calculateAndShowFileVolatilityRisk_: function(diffElem) {
-     var fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
-     var fileName = fileNameElem.getAttribute('title');
+     const fileName = prisk.getFileNameForDiff_(diffElem);
 
      // 90 days ago
-     var threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
+     const threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
        prisk.setRiskInDiff_(diffElem, results.length, config.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
      });
@@ -70,15 +69,15 @@ var prisk = {
     *  and update the appropriate field in the diff.
     */
    calculateAndShowAuthorVolatilityRisk_: function(diffElem) {
-     var threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
-     var fileName = prisk.getFileNameForDiff_(diffElem);
+     const threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
+     const fileName = prisk.getFileNameForDiff_(diffElem);
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
-       var authors = results.map( function(commit) {
+       const authors = results.map( function(commit) {
          return commit.commit.author.name;
        });
 
-       var uniqueAuthors = [];
+       const uniqueAuthors = [];
        authors.forEach( function(author) {
          uniqueAuthors[author] = true;
        });
@@ -88,7 +87,7 @@ var prisk = {
    },
 
    getFileNameForDiff_: function(diffElem) {
-     var fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
+     const fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
      return fileNameElem.getAttribute('title');
    },
 
@@ -104,21 +103,16 @@ var prisk = {
     * @return {Integer} the maximum complexity within this diff.
     */
     getComplexityForDiffDiv_(diff) {
-      var additions = diff.getElementsByClassName('blob-code blob-code-addition');
-      var individualIndents = prisk.htmlCollectionMap_(additions, function(addition) {
-        var codeSegment = addition.getElementsByClassName('blob-code-inner').item(0).firstChild.textContent.substring(1);
-        var firstNonWhitespace = codeSegment.search(prisk.constants_.FIRST_NON_WHITESPACE_REGEX);
-        if (firstNonWhitespace == -1) {
-          // if no non-whitespace characters were found, we just want the length of the all-whitespace string
-          // it is sometimes the case that there are whitespace characters in the first text node, sometimes not.
-          firstNonWhitespace = codeSegment.length;
-        }
-        return firstNonWhitespace;
+      const additions = diff.getElementsByClassName('blob-code blob-code-addition');
+      const individualIndents = prisk.htmlCollectionMap_(additions, function(addition) {
+        const codeSegment = addition.getElementsByClassName('blob-code-inner').item(0).firstChild.textContent.substring(1);
+        const firstNonWhitespace = codeSegment.search(prisk.constants_.FIRST_NON_WHITESPACE_REGEX);
+        return firstNonWhitespace === -1 ? codeSegment.length : firstNonWhitespace;
       });
 
       // now get the unique values of indents within this diff. the length of that
       // is the maximum complexity of the diff's additions
-      var uniqueIndents = [];
+      const uniqueIndents = [];
       individualIndents.forEach( function(indent) {
         // use "" + indent because "number".toString creates an index into a sparse array
         // even though "number" is a string; it's coerced to an Integer
@@ -135,10 +129,10 @@ var prisk = {
     * @return {Array} the mapped values from the collection
     */
    htmlCollectionMap_: function(collection, mapFunction) {
-     var returnValue = [];
+     const returnValue = [];
 
      for (var collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
-       var mapResult = mapFunction(collection.item(collectionIndex));
+       const mapResult = mapFunction(collection.item(collectionIndex));
        returnValue.push(mapResult);
      }
      return returnValue;
@@ -152,7 +146,7 @@ var prisk = {
     * @return {Array} the items that have passed the filter function
     */
     htmlCollectionFilter_: function(collection, filterFunction) {
-      var returnValue = [];
+      const returnValue = [];
       prisk.htmlCollectionForEach_(collection, function(item) {
         if (filterFunction(item)) {
           returnValue.push(item);
@@ -186,19 +180,19 @@ var prisk = {
    * @param {String} the username of this PR's author
    */
   showAuthorNewness_: function(login) {
-     var authorSearchUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
+     const authorSearchUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
        encodeURIComponent(prisk.mergedSearchQuery + ' author:' + login) + prisk.constants_.MINIMAL_SEARCH_RESULTS;
 
      git_helper.fetchAsJson(authorSearchUrl, function(authorPRSearchData) {
-       var authoredCount = authorPRSearchData.total_count;
+       const authoredCount = authorPRSearchData.total_count;
 
        // that gets us the author's PRs, but we need to compare to the total PRs
        // for the repo with another search and then divide
-       var allRepoPRsUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
+       const allRepoPRsUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
          encodeURIComponent(prisk.mergedSearchQuery) + prisk.constants_.MINIMAL_SEARCH_RESULTS;
 
        git_helper.fetchAsJson(allRepoPRsUrl, function(allPRSearchData) {
-         var totalCount = allPRSearchData.total_count;
+         const totalCount = allPRSearchData.total_count;
          prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
        });
      });
@@ -211,13 +205,13 @@ var prisk = {
    * @param {Object} the value to put into that field
    */
  setMetricField_: function(metric, value) {
-     var field = document.getElementById(metric.id);
+     const field = document.getElementById(metric.id);
      if (field == null) {
        console.log('field ' + metric.id + ' not found');
        return;
      }
 
-     var riskAssessment = prisk.getRiskAssessment_(value, metric);
+     const riskAssessment = prisk.getRiskAssessment_(value, metric);
      console.log('risk value for ' + metric.id + ': ' + value.toString());
 
      prisk.setRiskAssessmentCell_(field, riskAssessment);
@@ -230,9 +224,9 @@ var prisk = {
    * @param {Object} the general information for this risk assessment
    */
   setRiskInDiff_: function(diff, riskValue, riskConfiguration) {
-    var riskFieldId = diff.id + '-' + riskConfiguration.id;
-    var riskField = document.getElementById(riskFieldId);
-    var riskAssessment = prisk.getRiskAssessment_(riskValue, riskConfiguration);
+    const riskFieldId = diff.id + '-' + riskConfiguration.id;
+    const riskField = document.getElementById(riskFieldId);
+    const riskAssessment = prisk.getRiskAssessment_(riskValue, riskConfiguration);
 
     console.log('risk value for ' + riskConfiguration.id + ' in ' + diff.id + ': ' + riskValue.toString());
 
@@ -266,9 +260,9 @@ var prisk = {
    * @param {Object} the JSON data for the PR, as a convenience
    */
   loadDiffRisks_: function(prData) {
-     var diffs = prisk.getDiffElements_();
+     const diffs = prisk.getDiffElements_();
      diffs.forEach(function(diffElem) {
-        var maxComplexity = prisk.getComplexityForDiffDiv_(diffElem);
+        const maxComplexity = prisk.getComplexityForDiffDiv_(diffElem);
         prisk.setRiskInDiff_(diffElem, maxComplexity, config.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
 
         prisk.calculateAndShowFileVolatilityRisk_(diffElem);
@@ -295,7 +289,7 @@ var prisk = {
    * @return {String} the API URL for this PR.
    */
   getPRAPIURL_: function(browserUrl) {
-    var urlParts = prisk.splitUrl_(browserUrl);
+    const urlParts = prisk.splitUrl_(browserUrl);
     return [prisk.getRepoAPIURL_(browserUrl), 'pulls', urlParts[6]].join(prisk.constants_.URL_SLASH);
   },
 
@@ -304,7 +298,7 @@ var prisk = {
    *     -> https://github.va.opower.it/repos/opower/archmage
    */
    getRepoAPIURL_: function(documentUrl) {
-     var urlParts = prisk.splitUrl_(documentUrl);
+     const urlParts = prisk.splitUrl_(documentUrl);
      return [prisk.getAPIRootURL_(documentUrl), 'repos', urlParts[3], urlParts[4]].join(prisk.constants_.URL_SLASH);
    },
 
@@ -325,7 +319,7 @@ var prisk = {
     * @return {String} the base of the API URL, based on the browser URL
     */
   getAPIRootURL_: function(browserUrl) {
-    var urlParts = prisk.splitUrl_(browserUrl);
+    const urlParts = prisk.splitUrl_(browserUrl);
     // the extra URL_SLASH here is to handle the two slashes after the protocol
     return [urlParts[0] + prisk.constants_.URL_SLASH, urlParts[2],
            'api', 'v3'].join(prisk.constants_.URL_SLASH);
@@ -337,18 +331,18 @@ var prisk = {
    * @private
    */
   configureUI_: function() {
-     var headerPane = document.getElementById(prisk.getPRPanelId_());
+     const headerPane = document.getElementById(prisk.getPRPanelId_());
 
-     var resultsTable = prisk.appendRiskTableToDiff_(headerPane, 'PRisk Overall Assessment');
+     const resultsTable = prisk.appendRiskTableToDiff_(headerPane, 'PRisk Overall Assessment');
      resultsTable.id = prisk.constants_.RESULTS_ID;
 
      Object.keys(config.OVERALL_FIELD_TO_DESCRIPTION).forEach( function(item) {
-       var tr = document.createElement('tr');
-       var descTd = document.createElement('td');
+       const tr = document.createElement('tr');
+       const descTd = document.createElement('td');
        descTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
        descTd.appendChild(document.createTextNode(config.OVERALL_FIELD_TO_DESCRIPTION[item].description));
 
-       var valueTd = document.createElement('td');
+       const valueTd = document.createElement('td');
        valueTd.id = config.OVERALL_FIELD_TO_DESCRIPTION[item].id;
        valueTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
        valueTd.appendChild(document.createTextNode(prisk.constants_.LOADING_STATUS));
@@ -367,25 +361,25 @@ var prisk = {
    * @private
    */
   configureDiffsUI_: function() {
-    var diffDivs = prisk.getDiffElements_();
+    const diffDivs = prisk.getDiffElements_();
 
     // diffDivs is an array, because that's what getDiffElements_ returns
     diffDivs.forEach( function(diff) {
 
-      var diffHeaderDiv = diff.getElementsByClassName('file-info').item(0);
-      var diffRiskTable = prisk.appendRiskTableToDiff_(diffHeaderDiv, 'PRisk Diff Assessment');
+      const diffHeaderDiv = diff.getElementsByClassName('file-info').item(0);
+      const diffRiskTable = prisk.appendRiskTableToDiff_(diffHeaderDiv, 'PRisk Diff Assessment');
 
       // for each of the per-diff fields, add a row
       Object.keys(config.DIFF_FIELD_TO_DESCRIPTION).forEach(function(riskMetricConfiguration) {
-        var riskMetric = config.DIFF_FIELD_TO_DESCRIPTION[riskMetricConfiguration];
+        const riskMetric = config.DIFF_FIELD_TO_DESCRIPTION[riskMetricConfiguration];
 
-        var tr = document.createElement('tr');
-        var description = document.createElement('td');
+        const tr = document.createElement('tr');
+        const description = document.createElement('td');
         description.setAttribute('class', 'prisk-table-cell-defaults prisk-text-default');
         description.appendChild(document.createTextNode(riskMetric.description));
         tr.appendChild(description);
 
-        var risk = document.createElement('td');
+        const risk = document.createElement('td');
         risk.id = diff.id + '-' + riskMetric.id;
         risk.setAttribute('class', 'prisk-table-cell-defaults prisk-text-default');
         risk.appendChild(document.createTextNode(prisk.constants_.LOADING_STATUS));
@@ -401,19 +395,19 @@ var prisk = {
    */
   getDiffElements_: function() {
 
-    var filesContainer = document.getElementById(prisk.constants_.FILES_DIV);
+    const filesContainer = document.getElementById(prisk.constants_.FILES_DIV);
     // TODO: why is this sometimes null?
     // https://github.va.opower.it/x-web-widgets/widget-data-browser/pull/272
     if (filesContainer == null) {
       return [];
     }
 
-    var fileElems = filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
+    const fileElems = filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
 
     return prisk.htmlCollectionFilter_(fileElems, function excludeRegexes(fileElem) {
 
       // if there's a regex that matches the string, that string should be included.
-      var foundMatch = config.excludedFileRegexes.find( function findMatch(regex) {
+      const foundMatch = config.excludedFileRegexes.find( function findMatch(regex) {
         return regex.exec(prisk.getFileNameForDiff_(fileElem)) !== null;
       });
 
@@ -431,11 +425,11 @@ var prisk = {
    */
   appendRiskTableToDiff_: function(diffDiv, tableName) {
 
-    var diffRiskTable = document.createElement('table');
+    const diffRiskTable = document.createElement('table');
     diffRiskTable.setAttribute('class', 'prisk-table');
 
-    var headerRow = document.createElement('tr');
-    var header = document.createElement('th');
+    const headerRow = document.createElement('tr');
+    const header = document.createElement('th');
     header.setAttribute('class', 'prisk-table-cell-defaults');
     header.setAttribute('colspan', '2');
     header.appendChild(document.createTextNode(tableName));
@@ -454,7 +448,7 @@ var prisk = {
    * @param {String} risk assessment as a string
    */
   setRiskAssessmentCell_: function(riskElem, riskAssessment) {
-    var metricTextSpan = document.createElement('span');
+    const metricTextSpan = document.createElement('span');
     metricTextSpan.setAttribute('class', 'prisk-risk-' + riskAssessment);
     metricTextSpan.appendChild(document.createTextNode(riskAssessment));
     riskElem.replaceChild(metricTextSpan, riskElem.firstChild);

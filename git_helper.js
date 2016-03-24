@@ -4,7 +4,7 @@ var git_helper = {
   // Given a commit URL, get the data and
   // call resultFunction with it.
   collectAllCommitData: function(url, resultFunction) {
-    var allResults = git_helper.accumulateJSONResults([], url).then(resultFunction);
+    const allResults = git_helper.accumulateJSONResults([], url).then(resultFunction);
   },
 
   json: function(response) {
@@ -26,12 +26,12 @@ var git_helper = {
   accumulateJSONResults: function(startArray, url, callback) {
     return fetch(url).then(function parseResponse(response) {
 
-      var linkHeader = response.headers.get('Link');
-      var nextLink = git_helper.parseNextLinkFromLinkHeader(linkHeader);
+      const linkHeader = response.headers.get('Link');
+      const nextLink = git_helper.parseNextLinkFromLinkHeader(linkHeader);
 
       // once the json is parsed, if there's a next link, recurse
       return response.json().then( function(json) {
-        var newResults = startArray.concat(json);
+        const newResults = startArray.concat(json);
         return nextLink === null ? newResults : git_helper.accumulateJSONResults(newResults, nextLink);
       });
     });
@@ -46,15 +46,15 @@ var git_helper = {
       return null;
     }
 
-    var links = linkHeader.split(',');
-    var link = links.find( function findNextLink(link) {
+    const links = linkHeader.split(',');
+    const link = links.find( function findNextLink(link) {
       return link.match(/rel="next"/);
     });
 
     if (link === undefined) {
       return null;
     } else {
-      var rawLink = link.split(';')[0];
+      const rawLink = link.split(';')[0];
       return rawLink.substring(1, rawLink.trim().length - 1);
     }
   }
