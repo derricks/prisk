@@ -10,7 +10,7 @@ var prisk = {
   createRiskAssessment: function() {
     prisk.configureUI_();
 
-    prisk.loadPRData_(prisk.getPRAPIURL_(window.location.href), function(prData) {
+    git_helper.fetchAsJson(prisk.getPRAPIURL_(window.location.href), function(prData) {
 
       // fill in some convenience info from the data
       prisk.pr_repo =  prData.base.repo.name;
@@ -189,7 +189,7 @@ var prisk = {
      var authorSearchUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
        encodeURIComponent(prisk.mergedSearchQuery + ' author:' + login) + prisk.constants_.MINIMAL_SEARCH_RESULTS;
 
-     prisk.loadJsonFromUrl_(authorSearchUrl, function(authorPRSearchData) {
+     git_helper.fetchAsJson(authorSearchUrl, function(authorPRSearchData) {
        var authoredCount = authorPRSearchData.total_count;
 
        // that gets us the author's PRs, but we need to compare to the total PRs
@@ -197,7 +197,7 @@ var prisk = {
        var allRepoPRsUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
          encodeURIComponent(prisk.mergedSearchQuery) + prisk.constants_.MINIMAL_SEARCH_RESULTS;
 
-       prisk.loadJsonFromUrl_(allRepoPRsUrl, function(allPRSearchData) {
+       git_helper.fetchAsJson(allRepoPRsUrl, function(allPRSearchData) {
          var totalCount = allPRSearchData.total_count;
          prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
        });
@@ -284,25 +284,7 @@ var prisk = {
    * @param {Function} a callback function that takes the PR data JSON
    */
   loadPRData_: function(prUrl, prHandlerFunction) {
-     prisk.loadJsonFromUrl_(prUrl, function(payload) {
-       prHandlerFunction(payload);
-     });
-  },
-
-   /** Fetches the passed-in URL, parses it to JSON, and then passes that
-    *  JSON to the passed-in function.
-    *
-    * @private
-    * @param {String} the URL to fetch from
-    * @param {Function} the function to call when the data loads. Takes the JSON payload.
-    */
-  loadJsonFromUrl_: function(url, payloadHandlerFunction) {
-      var xhr = new XMLHttpRequest();
-      xhr.onload = function() {
-        payloadHandlerFunction(JSON.parse(xhr.response));
-      };
-      xhr.open('GET', url);
-      xhr.send();
+    return git_helper.fetchAsJson(prUrl, prHandlerFunction);
   },
 
   /** Retrieve the API URL to use for this PR, based
