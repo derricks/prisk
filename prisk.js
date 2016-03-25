@@ -241,14 +241,13 @@ var prisk = {
    * @param {Object} the configuration for that risk metric
    * @return {String} the risk assessment for that value based on the configuration
    */
-   //TODO: just return the value from the ifs
    getRiskAssessment_: function(value, configuration) {
-     if (value >= configuration.goodValue && value < configuration.warnValue) {
-       return 'MEDIUM';
-     }
-
      if (value >= configuration.warnValue) {
        return 'HIGH';
+     }
+
+     if (value >= configuration.goodValue) {
+       return 'MEDIUM';
      }
 
      return 'LOW';
