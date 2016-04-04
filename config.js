@@ -1,4 +1,4 @@
-var config = {
+const config = {
   // an array of regexes to use for filtering out
   // files. Any diff whose file is matched by any
   // regex in this list will not get a per-diff

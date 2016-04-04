@@ -1,6 +1,6 @@
 /** Provides risk heuristics for a given pull request. */
 
-var prisk = {
+const prisk = {
 
   /** This serves as the main entry point for this object.
    *  The page calls this to start the risk assessment.
@@ -131,7 +131,7 @@ var prisk = {
    htmlCollectionMap_: function(collection, mapFunction) {
      const returnValue = [];
 
-     for (var collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
+     for (let collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
        const mapResult = mapFunction(collection.item(collectionIndex));
        returnValue.push(mapResult);
      }

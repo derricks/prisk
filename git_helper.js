@@ -1,5 +1,5 @@
 
-var git_helper = {
+const git_helper = {
 
   // Given a commit URL, get the data and
   // call resultFunction with it.
