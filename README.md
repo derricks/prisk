@@ -31,6 +31,8 @@ Some of the work that has inspired and informed this:
   * Reexamining the Fault Density - Component Size Connection - Les Hatton
   * Investigating Code Review Practices in Defective Files: An Empirical Study of the Qt System -
     Patanamon Thongtanunam, Shane McIntosh, Ahmed E. Hassan, Hajimu Iida
+  * Predicting Source Code Changes by Mining Revision History -
+    Annie T.T. Ying, Gail C. Murphy, Raymond Ng, Mark C. Chu-Carroll
 
 
 What's Implemented
@@ -56,6 +58,7 @@ The following risk factors are currently called out:
     * Maximum complexity within the diff, approximated by indents.
     * File volatility. Files that have been updated a lot recently are more prone to defects.
     * Author volatility. Files with numerous recent contributors are more prone to defects.
+    * File youth. New files typically have more defects.
 
 What's Planned
 ==============

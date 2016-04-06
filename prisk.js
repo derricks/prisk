@@ -59,7 +59,7 @@ const prisk = {
      const fileName = prisk.getFileNameForDiff_(diffElem);
 
      // 90 days ago
-     const threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
+     const threeMonthsAgo = new Date(new Date().getTime() - (90 * prisk.constants_.MILLIS_PER_DAY));
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
        prisk.setRiskInDiff_(diffElem, results.length, config.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
      });
@@ -69,7 +69,7 @@ const prisk = {
     *  and update the appropriate field in the diff.
     */
    calculateAndShowAuthorVolatilityRisk_: function(diffElem) {
-     const threeMonthsAgo = new Date(new Date().getTime() - (90 * 24 * 60 * 60 * 1000));
+     const threeMonthsAgo = new Date(new Date().getTime() - (90 * prisk.constants_.MILLIS_PER_DAY));
      const fileName = prisk.getFileNameForDiff_(diffElem);
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
@@ -84,6 +84,39 @@ const prisk = {
 
        prisk.setRiskInDiff_(diffElem, Object.keys(uniqueAuthors).length, config.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
      });
+   },
+
+   /** Calculate the file youth risk. Newer files tend to have more
+    *  defects. Note that this is a reverse risk assessment, since
+    *  the various functions that show risk assume a lower number is
+    *  better. We do this by subtracting from our "best" value.
+    */
+   calculateAndShowFileYouthRisk_: function(diffElem) {
+     const filename = prisk.getFileNameForDiff_(diffElem);
+     git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + filename,
+       function(commits) {
+
+         const commitDates = commits.map( function timestampsOnly(commit) {
+           return new Date(commit.commit.author.date).getTime()
+         });
+
+         // sort the commits by age, and find the oldest commit
+         const sortedCommits = commitDates.sort( function sortByCommitAge(commitTimestamp1, commitTimestamp2) {
+           if (commitTimestamp1 < commitTimestamp2) {
+             return -1;
+           } else if (commitTimestamp1 > commitTimestamp2) {
+             return 1;
+           } else {
+             return 0;
+           }
+         });
+
+         // if there are no commits for this file, it's a new file, so set it to now so that risk is high
+         const earliestTimestamp = sortedCommits.length === 0 ? new Date().getTime() : sortedCommits[0];
+         const daysSinceEarliestCommit = (new Date().getTime() - earliestTimestamp)/prisk.constants_.MILLIS_PER_DAY
+         prisk.setRiskInDiff_(diffElem, 30 - daysSinceEarliestCommit, config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK);
+    });
+
    },
 
    getFileNameForDiff_: function(diffElem) {
@@ -163,7 +196,7 @@ const prisk = {
     * @param {Function} the function to invoke with each item
     */
    htmlCollectionForEach_: function(collection, forEachFunction) {
-     for (var collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
+     for (let collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
        forEachFunction(collection.item(collectionIndex));
      }
    },
@@ -267,6 +300,8 @@ const prisk = {
         prisk.calculateAndShowFileVolatilityRisk_(diffElem);
 
         prisk.calculateAndShowAuthorVolatilityRisk_(diffElem);
+
+        prisk.calculateAndShowFileYouthRisk_(diffElem);
      });
    },
 
@@ -484,7 +519,8 @@ const prisk = {
     FIRST_NON_WHITESPACE_REGEX: /[^\s]/,
     FILES_DIV: 'files',
     FILE_DIV: 'file',
-    LOADING_STATUS: 'Loading'
+    LOADING_STATUS: 'Loading',
+    MILLIS_PER_DAY: 24 * 60 * 60 * 1000
   }
 };
 

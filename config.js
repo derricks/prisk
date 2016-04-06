@@ -66,6 +66,13 @@ const config = {
       description: 'Author volatility risk',
       goodValue: 4,
       warnValue: 6
+    },
+
+    FILE_YOUTH_RISK: {
+      id: 'prisk-file-youth-risk',
+      description: 'File youth risk',
+      goodValue: 0,
+      warnValue: 15
     }
   }
 };
