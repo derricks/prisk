@@ -3,15 +3,19 @@
 
   "name": "PRisk",
   "description": "Add risk analysis to git PRs",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": "Derrick Schneider <derrick.schneider@opower.com>",
 
   "content_scripts": [
     {
       "matches": ["http://github.va.opower.it/*", "https://github.va.opower.it/*"],
-      "js": ["config.js", "git_helper.js", "prisk.js"],
+      "js": ["config.js", "git_helper.js", "ui.js", "prisk.js"],
       "css": ["prisk.css"]
     }
+  ],
+
+  "web_accessible_resources": [
+    "images/*.png"
   ],
 
   "permissions": [
