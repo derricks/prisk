@@ -82,7 +82,7 @@ const ui = {
 
     return prisk.htmlCollectionFilter_(fileElems, function excludeRegexes(fileElem) {
 
-      // if there's a regex that matches the string, that string should be included.
+      // if there's a regex that matches the string, that string should not be included.
       const foundMatch = config.excludedFileRegexes.find( function findMatch(regex) {
         return regex.exec(prisk.getFileNameForDiff_(fileElem)) !== null;
       });
