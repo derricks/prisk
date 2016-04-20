@@ -57,5 +57,40 @@ const git_helper = {
       const rawLink = link.split(';')[0];
       return rawLink.substring(1, rawLink.trim().length - 1);
     }
+  },
+
+  /** Determines the API base URL given the current browser URL.
+   *
+   * @param {String} the window's URL
+   * @return {String} the base of the API URL, based on the browser URL
+   */
+ getAPIRootURL: function(browserUrl) {
+   const urlParts = prisk.splitUrl_(browserUrl);
+   if (git_helper.isGithubCom()) {
+     return 'https://api.github.com';
+   }
+
+   // the extra URL_SLASH here is to handle the two slashes after the protocol
+   return [urlParts[0] + prisk.constants_.URL_SLASH, urlParts[2],
+          'api', 'v3'].join(prisk.constants_.URL_SLASH);
+ },
+
+ /** Determine if you're on github.com (which has different names for elements)
+  *
+  * @return true if you're on github.com, false otherwise
+  */
+  isGithubCom: function() {
+    return prisk.splitUrl_(document.location.href)[2].endsWith('github.com');
+  },
+
+ /** For a given file diff, figure out the the name of the file being represented
+  *
+  * @param {Element} the diff element to inspect
+  * @return {String} the name of the file the diff represents
+  */
+  getFileNameForDiff: function(diffElem) {
+    const fileHeader = diffElem.getElementsByClassName('file-header').item(0);
+    return fileHeader.getAttribute('data-path');
   }
+
 }
