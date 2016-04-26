@@ -9,7 +9,7 @@
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
-      "js": ["config.js", "git_helper.js", "ui.js", "prisk.js"],
+      "js": ["config.js", "git_helper.js", "ui.js", "prisk.js", "util.js"],
       "css": ["prisk.css"]
     }
   ],

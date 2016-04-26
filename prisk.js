@@ -59,7 +59,7 @@ const prisk = {
      const fileName = git_helper.getFileNameForDiff(diffElem);
 
      // 90 days ago
-     const threeMonthsAgo = new Date(new Date().getTime() - (90 * prisk.constants_.MILLIS_PER_DAY));
+     const threeMonthsAgo = util.getNDaysAgo(90);
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
        prisk.setRiskInDiff_(diffElem, results.length, config.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
      });
@@ -69,7 +69,7 @@ const prisk = {
     *  and update the appropriate field in the diff.
     */
    calculateAndShowAuthorVolatilityRisk_: function(diffElem) {
-     const threeMonthsAgo = new Date(new Date().getTime() - (90 * prisk.constants_.MILLIS_PER_DAY));
+     const threeMonthsAgo = util.getNDaysAgo(90);
      const fileName = git_helper.getFileNameForDiff(diffElem);
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
@@ -93,6 +93,10 @@ const prisk = {
     */
    calculateAndShowFileYouthRisk_: function(diffElem) {
      const filename = git_helper.getFileNameForDiff(diffElem);
+     // if any item in the result set is older than this date,
+     // we can stop fetching results
+     const safeDate = util.getNDaysAgo(config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK.safeDaysBack);
+
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + filename,
        function(commits) {
 
@@ -114,7 +118,17 @@ const prisk = {
          // if there are no commits for this file, it's a new file, so set it to now so that risk is high
          const earliestTimestamp = sortedCommits.length === 0 ? new Date().getTime() : sortedCommits[0];
          const daysSinceEarliestCommit = (new Date().getTime() - earliestTimestamp)/prisk.constants_.MILLIS_PER_DAY
-         prisk.setRiskInDiff_(diffElem, 30 - daysSinceEarliestCommit, config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK);
+         prisk.setRiskInDiff_(diffElem, config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK.safeDaysBack - daysSinceEarliestCommit,
+               config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK);
+    }, function commitsAreYounger(currentResults) {
+      const safeDateMillis = safeDate.getTime();
+      // if any element in the current set of results is older than safeDate, then we can stop querying
+      // because we know the risk is low
+      const foundOlderCommit = currentResults.find( function isAnyDateOldEnough(commit) {
+        return new Date(commit.commit.author.date).getTime() < safeDateMillis;
+      });
+
+      return foundOlderCommit === undefined
     });
 
    },
