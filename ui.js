@@ -84,7 +84,7 @@ const ui = {
 
       // if there's a regex that matches the string, that string should not be included.
       const foundMatch = config.excludedFileRegexes.find( function findMatch(regex) {
-        return regex.exec(prisk.getFileNameForDiff_(fileElem)) !== null;
+        return regex.exec(git_helper.getFileNameForDiff(fileElem)) !== null;
       });
 
       return foundMatch === undefined;

@@ -56,7 +56,7 @@ const prisk = {
     *  and set the appropriate field with the value.
     */
    calculateAndShowFileVolatilityRisk_: function(diffElem) {
-     const fileName = prisk.getFileNameForDiff_(diffElem);
+     const fileName = git_helper.getFileNameForDiff(diffElem);
 
      // 90 days ago
      const threeMonthsAgo = new Date(new Date().getTime() - (90 * prisk.constants_.MILLIS_PER_DAY));
@@ -70,7 +70,7 @@ const prisk = {
     */
    calculateAndShowAuthorVolatilityRisk_: function(diffElem) {
      const threeMonthsAgo = new Date(new Date().getTime() - (90 * prisk.constants_.MILLIS_PER_DAY));
-     const fileName = prisk.getFileNameForDiff_(diffElem);
+     const fileName = git_helper.getFileNameForDiff(diffElem);
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
        const authors = results.map( function(commit) {
@@ -92,7 +92,7 @@ const prisk = {
     *  better. We do this by subtracting from our "best" value.
     */
    calculateAndShowFileYouthRisk_: function(diffElem) {
-     const filename = prisk.getFileNameForDiff_(diffElem);
+     const filename = git_helper.getFileNameForDiff(diffElem);
      git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + filename,
        function(commits) {
 
@@ -117,11 +117,6 @@ const prisk = {
          prisk.setRiskInDiff_(diffElem, 30 - daysSinceEarliestCommit, config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK);
     });
 
-   },
-
-   getFileNameForDiff_: function(diffElem) {
-     const fileNameElem = diffElem.getElementsByClassName('js-selectable-text').item(0);
-     return fileNameElem.getAttribute('title');
    },
 
 
@@ -332,7 +327,7 @@ const prisk = {
    */
    getRepoAPIURL_: function(documentUrl) {
      const urlParts = prisk.splitUrl_(documentUrl);
-     return [prisk.getAPIRootURL_(documentUrl), 'repos', urlParts[3], urlParts[4]].join(prisk.constants_.URL_SLASH);
+     return [git_helper.getAPIRootURL(documentUrl), 'repos', urlParts[3], urlParts[4]].join(prisk.constants_.URL_SLASH);
    },
 
    /** Get the search API URL as derived from the passed-in URL.
@@ -342,20 +337,7 @@ const prisk = {
     * @return {String} the search API base.
     */
   getSearchAPIURL_: function(documentURL) {
-    return [prisk.getAPIRootURL_(documentURL), 'search', 'issues'].join(prisk.constants_.URL_SLASH);
-  },
-
-   /** Determines the API base URL given the current browser URL.
-    *
-    * @private
-    * @param {String} the window's URL
-    * @return {String} the base of the API URL, based on the browser URL
-    */
-  getAPIRootURL_: function(browserUrl) {
-    const urlParts = prisk.splitUrl_(browserUrl);
-    // the extra URL_SLASH here is to handle the two slashes after the protocol
-    return [urlParts[0] + prisk.constants_.URL_SLASH, urlParts[2],
-           'api', 'v3'].join(prisk.constants_.URL_SLASH);
+    return [git_helper.getAPIRootURL(documentURL), 'search', 'issues'].join(prisk.constants_.URL_SLASH);
   },
 
   /**
