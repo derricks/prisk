@@ -72,7 +72,9 @@ const config = {
       id: 'prisk-file-youth-risk',
       description: 'File youth risk',
       goodValue: 0,
-      warnValue: 15
+      warnValue: 15,
+      // if any date in the result is older than this, we can stop looking
+      safeDaysBack: 30
     }
   }
 };

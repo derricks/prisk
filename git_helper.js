@@ -1,10 +1,16 @@
 
 const git_helper = {
 
-  // Given a commit URL, get the data and
-  // call resultFunction with it.
-  collectAllCommitData: function(url, resultFunction) {
-    const allResults = git_helper.accumulateJSONResults([], url).then(resultFunction);
+  /** Given a URL, collect the relevant results of the query
+   *  and pass them to the callback function.
+   *
+   * @param {String} the url from which to start the query
+   * @param {Function} the function to call with the results
+   * @param {Function} a function that can be used to see if enough data has been captured.
+   *        The function is passed the current state of the array and returns true (continue) or false (stop)
+   */
+  collectAllCommitData: function(url, resultFunction, shouldContinue) {
+    const allResults = git_helper.accumulateJSONResults([], url, shouldContinue).then(resultFunction);
   },
 
   json: function(response) {
@@ -17,13 +23,16 @@ const git_helper = {
     return fetch(url).then(git_helper.json).then(resultsFunction);
   },
 
-  // Accumulate results from a given URL, and paginate if necessary
-  //
-  // @param {Array} the array to start with
-  // @param {String} the url to query for more data
-  // @param {Function}
-  // @return {Array} the set of JSON results added to the starting array
-  accumulateJSONResults: function(startArray, url, callback) {
+  /** Accumulate results from a given URL, and paginate if necessary
+   *
+   * @param {Array} the results array to start with
+   * @param {String} the url to query for more data
+   * @param {Function} the callback function to use for processing the results
+   * @param {Function} a function that is passed the current array and
+   *        returns true or false to determine if the URL crawling should continue
+   * @return {Array} the set of JSON results added to the starting array
+   */
+  accumulateJSONResults: function(startArray, url, callback, shouldContinue) {
     return fetch(url).then(function parseResponse(response) {
 
       const linkHeader = response.headers.get('Link');
@@ -32,6 +41,10 @@ const git_helper = {
       // once the json is parsed, if there's a next link, recurse
       return response.json().then( function(json) {
         const newResults = startArray.concat(json);
+        if (!(shouldContinue === undefined || shouldContinue(newResults))) {
+          return newResults;
+        }
+
         return nextLink === null ? newResults : git_helper.accumulateJSONResults(newResults, nextLink);
       });
     });
