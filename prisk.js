@@ -10,27 +10,27 @@ const prisk = {
   createRiskAssessment: function() {
     ui.configureUI();
 
-    git_helper.fetchAsJson(prisk.getPRAPIURL_(window.location.href), function(prData) {
+    git_helper.fetchAsJson(git_helper.getPRAPIURL(window.location.href), function(prData) {
 
       // fill in some convenience info from the data
       prisk.pr_repo =  prData.base.repo.name;
       prisk.pr_org = prData.base.repo.owner.login;
-      prisk.mergedSearchQuery = 'type:pr is:merged repo:' + prisk.pr_org + prisk.constants_.URL_SLASH + prisk.pr_repo;
+      prisk.mergedSearchQuery = 'type:pr is:merged repo:' + prisk.pr_org + prisk.constants.URL_SLASH + prisk.pr_repo;
 
       // fill in the "total changes" risk value, which is just the sum of additions/deletions
-      prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.TOTAL_CHANGES,
+      prisk.setMetricField(config.OVERALL_FIELD_TO_DESCRIPTION.TOTAL_CHANGES,
                               prData.additions + prData.deletions);
       // changed files
-      prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.NUM_FILES, prData.changed_files);
+      prisk.setMetricField(config.OVERALL_FIELD_TO_DESCRIPTION.NUM_FILES, prData.changed_files);
 
-      prisk.showAuthorNewness_(prData.user.login);
+      prisk.showAuthorNewness(prData.user.login);
 
-      prisk.loadDiffRisks_(prData);
+      prisk.loadDiffRisks(prData);
     });
 
     // with that kicked off, calculate the average max complexity
-    prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.AVG_MAX_COMPLEXITY,
-      prisk.calculateAverageMaxComplexity_());
+    prisk.setMetricField(config.OVERALL_FIELD_TO_DESCRIPTION.AVG_MAX_COMPLEXITY,
+      prisk.calculateAverageMaxComplexity());
   },
 
   /** Calculate the average max complexity of the PR
@@ -40,11 +40,11 @@ const prisk = {
    * @private
    * @return {Float} the average max complexity of all the diffs.
    */
-   calculateAverageMaxComplexity_: function() {
+   calculateAverageMaxComplexity: function() {
 
-     const fileDiffs = ui.getDiffElements_();
+     const fileDiffs = ui.getDiffElements();
      const maxComplexities = fileDiffs.map( function(file) {
-       return prisk.getComplexityForDiffDiv_(file);
+       return prisk.getComplexityForDiffDiv(file);
      });
 
      const nonZeroComplexities = maxComplexities.filter( function(complexity) { return complexity != 0;} );
@@ -55,23 +55,23 @@ const prisk = {
    /** Calculate the volatility risk for the file mentioned in the diff,
     *  and set the appropriate field with the value.
     */
-   calculateAndShowFileVolatilityRisk_: function(diffElem) {
-     const fileName = git_helper.getFileNameForDiff(diffElem);
+   calculateAndShowFileVolatilityRisk: function(diffElem) {
+     const fileName = ui.getFileNameForDiff(diffElem);
 
      // 90 days ago
      const threeMonthsAgo = util.getNDaysAgo(90);
-     git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
-       prisk.setRiskInDiff_(diffElem, results.length, config.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
+     git_helper.collectAllCommitData(git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
+       prisk.setRiskInDiff(diffElem, results.length, config.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
      });
    },
 
    /** Calculate the author volatility (too many recent contributors)
     *  and update the appropriate field in the diff.
     */
-   calculateAndShowAuthorVolatilityRisk_: function(diffElem) {
+   calculateAndShowAuthorVolatilityRisk: function(diffElem) {
      const threeMonthsAgo = util.getNDaysAgo(90);
-     const fileName = git_helper.getFileNameForDiff(diffElem);
-     git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
+     const fileName = ui.getFileNameForDiff(diffElem);
+     git_helper.collectAllCommitData(git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
        const authors = results.map( function(commit) {
          return commit.commit.author.name;
@@ -82,22 +82,22 @@ const prisk = {
          uniqueAuthors[author] = true;
        });
 
-       prisk.setRiskInDiff_(diffElem, Object.keys(uniqueAuthors).length, config.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
+       prisk.setRiskInDiff(diffElem, Object.keys(uniqueAuthors).length, config.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
      });
    },
 
    /** Calculate the file youth risk. Newer files tend to have more
     *  defects. Note that this is a reverse risk assessment, since
-    *  the various functions that show risk assume a lower number is
+    *  the various  functions that show risk assume a lower number is
     *  better. We do this by subtracting from our "best" value.
     */
-   calculateAndShowFileYouthRisk_: function(diffElem) {
-     const filename = git_helper.getFileNameForDiff(diffElem);
+   calculateAndShowFileYouthRisk: function(diffElem) {
+     const filename = ui.getFileNameForDiff(diffElem);
      // if any item in the result set is older than this date,
      // we can stop fetching results
      const safeDate = util.getNDaysAgo(config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK.safeDaysBack);
 
-     git_helper.collectAllCommitData(prisk.getRepoAPIURL_(document.location.href) + '/commits?path=' + filename,
+     git_helper.collectAllCommitData(git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + filename,
        function(commits) {
 
          const commitDates = commits.map( function timestampsOnly(commit) {
@@ -117,8 +117,8 @@ const prisk = {
 
          // if there are no commits for this file, it's a new file, so set it to now so that risk is high
          const earliestTimestamp = sortedCommits.length === 0 ? new Date().getTime() : sortedCommits[0];
-         const daysSinceEarliestCommit = (new Date().getTime() - earliestTimestamp)/prisk.constants_.MILLIS_PER_DAY
-         prisk.setRiskInDiff_(diffElem, config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK.safeDaysBack - daysSinceEarliestCommit,
+         const daysSinceEarliestCommit = (new Date().getTime() - earliestTimestamp)/prisk.constants.MILLIS_PER_DAY
+         prisk.setRiskInDiff(diffElem, config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK.safeDaysBack - daysSinceEarliestCommit,
                config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK);
     }, function commitsAreYounger(currentResults) {
       const safeDateMillis = safeDate.getTime();
@@ -133,22 +133,21 @@ const prisk = {
 
    },
 
-
    /** Given a diff representing a file, return the maximum complexity
     * as defined by the number of unique indent levels, which is a stand-in
     * for McCabe complexity.
-    * See: Reading Beside the Lines: Indentation as a Proxy for Complexity Metrics
+    * See  Reading Beside the Lines: Indentation as a Proxy for Complexity Metrics
     * Hindle, Godfrey, Holt.
     *
     * @private
     * @param {Element} the diff for a given file
     * @return {Integer} the maximum complexity within this diff.
     */
-    getComplexityForDiffDiv_(diff) {
+    getComplexityForDiffDiv: function(diff) {
       const additions = diff.getElementsByClassName('blob-code blob-code-addition');
-      const individualIndents = prisk.htmlCollectionMap_(additions, function(addition) {
+      const individualIndents = util.htmlCollectionMap(additions, function(addition) {
         const codeSegment = addition.getElementsByClassName('blob-code-inner').item(0).firstChild.textContent.substring(1);
-        const firstNonWhitespace = codeSegment.search(prisk.constants_.FIRST_NON_WHITESPACE_REGEX);
+        const firstNonWhitespace = codeSegment.search(prisk.constants.FIRST_NON_WHITESPACE_REGEX);
         return firstNonWhitespace === -1 ? codeSegment.length : firstNonWhitespace;
       });
 
@@ -163,54 +162,6 @@ const prisk = {
       return Object.keys(uniqueIndents).length;
     },
 
-   /** Given an HTMLCollection, apply the map function to each element
-    *
-    * @private
-    * @param {HTMLCollection} the collection of HTML elements to traverse
-    * @param {Function} the mapping function to apply to each item
-    * @return {Array} the mapped values from the collection
-    */
-   htmlCollectionMap_: function(collection, mapFunction) {
-     const returnValue = [];
-
-     for (let collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
-       const mapResult = mapFunction(collection.item(collectionIndex));
-       returnValue.push(mapResult);
-     }
-     return returnValue;
-   },
-
-   /** Filter out elements from an HTMLCollection that don't pass
-    *  the filter function. If filter function returns true, the item
-    *  is included.
-    *
-    * @param {HTMLCollection} the HTMLCollection to filter
-    * @return {Array} the items that have passed the filter function
-    */
-    htmlCollectionFilter_: function(collection, filterFunction) {
-      const returnValue = [];
-      prisk.htmlCollectionForEach_(collection, function(item) {
-        if (filterFunction(item)) {
-          returnValue.push(item);
-        }
-      });
-      return returnValue;
-    },
-
-   /** Given an HTMLCollection, iterate over the each item and call
-    *  the callback function with that item.
-    *
-    * @private
-    * @param {HTMLCollection} collection
-    * @param {Function} the function to invoke with each item
-    */
-   htmlCollectionForEach_: function(collection, forEachFunction) {
-     for (let collectionIndex = 0; collectionIndex < collection.length; collectionIndex++) {
-       forEachFunction(collection.item(collectionIndex));
-     }
-   },
-
-
   /** Sets the metric for an author's newness, which is defined as 100 -
    *  the percentage of merged PRs authored by this person.
    *  The subtraction is to make the logic consistent for calculating
@@ -221,21 +172,21 @@ const prisk = {
    * @private
    * @param {String} the username of this PR's author
    */
-  showAuthorNewness_: function(login) {
-     const authorSearchUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
-       encodeURIComponent(prisk.mergedSearchQuery + ' author:' + login) + prisk.constants_.MINIMAL_SEARCH_RESULTS;
+  showAuthorNewness: function(login) {
+     const authorSearchUrl = git_helper.getSearchAPIURL(document.location.href) + '?q=' +
+       encodeURIComponent(prisk.mergedSearchQuery + ' author:' + login) + prisk.constants.MINIMAL_SEARCH_RESULTS;
 
      git_helper.fetchAsJson(authorSearchUrl, function(authorPRSearchData) {
        const authoredCount = authorPRSearchData.total_count;
 
        // that gets us the author's PRs, but we need to compare to the total PRs
        // for the repo with another search and then divide
-       const allRepoPRsUrl = prisk.getSearchAPIURL_(document.location.href) + '?q=' +
-         encodeURIComponent(prisk.mergedSearchQuery) + prisk.constants_.MINIMAL_SEARCH_RESULTS;
+       const allRepoPRsUrl = git_helper.getSearchAPIURL(document.location.href) + '?q=' +
+         encodeURIComponent(prisk.mergedSearchQuery) + prisk.constants.MINIMAL_SEARCH_RESULTS;
 
        git_helper.fetchAsJson(allRepoPRsUrl, function(allPRSearchData) {
          const totalCount = allPRSearchData.total_count;
-         prisk.setMetricField_(config.OVERALL_FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
+         prisk.setMetricField(config.OVERALL_FIELD_TO_DESCRIPTION.AUTHOR_NEWNESS, 100 - ((authoredCount/totalCount) * 100));
        });
      });
   },
@@ -246,17 +197,16 @@ const prisk = {
    * @param {String} the ID of the field to set
    * @param {Object} the value to put into that field
    */
- setMetricField_: function(metric, value) {
+ setMetricField: function(metric, value) {
      const field = document.getElementById(metric.id);
      if (field == null) {
        console.log('field ' + metric.id + ' not found');
        return;
      }
 
-     const riskAssessment = prisk.getRiskAssessment_(value, metric);
+     const riskAssessment = prisk.getRiskAssessment(value, metric);
      console.log('risk value for ' + metric.id + ': ' + value.toString());
-
-     ui.setTextRiskAssessmentCell_(field, riskAssessment);
+     ui.setTextRiskAssessmentCell(field, riskAssessment);
   },
 
   /** Sets the risk value for a given metric within a particular diff.
@@ -265,13 +215,13 @@ const prisk = {
    * @param {Number} the value of the risk assessment to be used
    * @param {Object} the general information for this risk assessment
    */
-  setRiskInDiff_: function(diff, riskValue, riskConfiguration) {
+  setRiskInDiff: function(diff, riskValue, riskConfiguration) {
     const riskFieldId = diff.id + '-' + riskConfiguration.id;
     const riskField = document.getElementById(riskFieldId);
-    const riskAssessment = prisk.getRiskAssessment_(riskValue, riskConfiguration);
+    const riskAssessment = prisk.getRiskAssessment(riskValue, riskConfiguration);
 
     console.log('risk value for ' + riskConfiguration.id + ' in ' + diff.id + ': ' + riskValue.toString());
-    ui.setImageRiskAssessmentCell_(riskField, riskConfiguration, riskAssessment);
+    ui.setImageRiskAssessmentCell(riskField, riskConfiguration, riskAssessment);
   },
 
   /** Given a risk assessment value and the configuration for that risk
@@ -282,7 +232,7 @@ const prisk = {
    * @param {Object} the configuration for that risk metric
    * @return {String} the risk assessment for that value based on the configuration
    */
-   getRiskAssessment_: function(value, configuration) {
+   getRiskAssessment: function(value, configuration) {
      if (value >= configuration.warnValue) {
        return 'HIGH';
      }
@@ -299,86 +249,21 @@ const prisk = {
    * @private
    * @param {Object} the JSON data for the PR, as a convenience
    */
-  loadDiffRisks_: function(prData) {
-     const diffs = ui.getDiffElements_();
+  loadDiffRisks: function(prData) {
+     const diffs = ui.getDiffElements();
      diffs.forEach(function(diffElem) {
-        const maxComplexity = prisk.getComplexityForDiffDiv_(diffElem);
-        prisk.setRiskInDiff_(diffElem, maxComplexity, config.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
+        const maxComplexity = prisk.getComplexityForDiffDiv(diffElem);
+        prisk.setRiskInDiff(diffElem, maxComplexity, config.DIFF_FIELD_TO_DESCRIPTION.MAX_COMPLEXITY);
 
-        prisk.calculateAndShowFileVolatilityRisk_(diffElem);
+        prisk.calculateAndShowFileVolatilityRisk(diffElem);
 
-        prisk.calculateAndShowAuthorVolatilityRisk_(diffElem);
+        prisk.calculateAndShowAuthorVolatilityRisk(diffElem);
 
-        prisk.calculateAndShowFileYouthRisk_(diffElem);
+        prisk.calculateAndShowFileYouthRisk(diffElem);
      });
    },
 
-  /** Loads the PR JSON from the given URL.
-   *
-   * @private
-   * @param {String} the API url from which to fetch the PR JSON
-   * @param {Function} a callback function that takes the PR data JSON
-   */
-  loadPRData_: function(prUrl, prHandlerFunction) {
-    return git_helper.fetchAsJson(prUrl, prHandlerFunction);
-  },
-
-  /** Retrieve the API URL to use for this PR, based
-   *  on the page's URL.
-   *
-   * @private
-   * @param {String} the browser URL from which to derive the API url
-   * @return {String} the API URL for this PR.
-   */
-  getPRAPIURL_: function(browserUrl) {
-    const urlParts = prisk.splitUrl_(browserUrl);
-    return [prisk.getRepoAPIURL_(browserUrl), 'pulls', urlParts[6]].join(prisk.constants_.URL_SLASH);
-  },
-
-  /** Retrieve the repos URL for this PR URL.
-   *  e.g., https://github.va.opower.it/opower/archmage/pull/516
-   *     -> https://github.va.opower.it/repos/opower/archmage
-   */
-   getRepoAPIURL_: function(documentUrl) {
-     const urlParts = prisk.splitUrl_(documentUrl);
-     return [git_helper.getAPIRootURL(documentUrl), 'repos', urlParts[3], urlParts[4]].join(prisk.constants_.URL_SLASH);
-   },
-
-   /** Get the search API URL as derived from the passed-in URL.
-    *
-    * @private
-    * @param {String} the base URL of the page
-    * @return {String} the search API base.
-    */
-  getSearchAPIURL_: function(documentURL) {
-    return [git_helper.getAPIRootURL(documentURL), 'search', 'issues'].join(prisk.constants_.URL_SLASH);
-  },
-
-  /**
-
-  /** Gets the appropriate div ID for the panel
-   *  where the results will be displayed.
-   *  Implemented as a function to handle different div IDs
-   *  for different versions of the UI.
-   *
-   * @private
-   * @return {String} the ID to use for finding the header pane
-   */
-  getPRPanelId_: function() {
-    return 'partial-discussion-header';
-  },
-
-  /** Returns the various URL components of the passed-in URL.
-   *
-   * @private
-   * @param {String} the URL to parse
-   * @return {Array} the components of the URL split on /
-   */
-  splitUrl_: function(url) {
-    return url.split(prisk.constants_.URL_SLASH);
-  },
-
-  constants_: {
+  constants: {
     URL_SLASH: '/',
     RESULTS_ID: 'prisk-overall-risk-results',
     MINIMAL_SEARCH_RESULTS: '&per_page=1',

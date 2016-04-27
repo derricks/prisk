@@ -2,12 +2,12 @@
 const git_helper = {
 
   /** Given a URL, collect the relevant results of the query
-   *  and pass them to the callback function.
+   *  and pass them to the callback  function.
    *
    * @param {String} the url from which to start the query
    * @param {Function} the function to call with the results
    * @param {Function} a function that can be used to see if enough data has been captured.
-   *        The function is passed the current state of the array and returns true (continue) or false (stop)
+   *        The  function is passed the current state of the array and returns true (continue) or false (stop)
    */
   collectAllCommitData: function(url, resultFunction, shouldContinue) {
     const allResults = git_helper.accumulateJSONResults([], url, shouldContinue).then(resultFunction);
@@ -78,14 +78,14 @@ const git_helper = {
    * @return {String} the base of the API URL, based on the browser URL
    */
  getAPIRootURL: function(browserUrl) {
-   const urlParts = prisk.splitUrl_(browserUrl);
+   const urlParts = git_helper.splitUrl(browserUrl);
    if (git_helper.isGithubCom()) {
      return 'https://api.github.com';
    }
 
    // the extra URL_SLASH here is to handle the two slashes after the protocol
-   return [urlParts[0] + prisk.constants_.URL_SLASH, urlParts[2],
-          'api', 'v3'].join(prisk.constants_.URL_SLASH);
+   return [urlParts[0] + prisk.constants.URL_SLASH, urlParts[2],
+          'api', 'v3'].join(prisk.constants.URL_SLASH);
  },
 
  /** Determine if you're on github.com (which has different names for elements)
@@ -93,17 +93,57 @@ const git_helper = {
   * @return true if you're on github.com, false otherwise
   */
   isGithubCom: function() {
-    return prisk.splitUrl_(document.location.href)[2].endsWith('github.com');
+    return git_helper.splitUrl(document.location.href)[2].endsWith('github.com');
   },
 
- /** For a given file diff, figure out the the name of the file being represented
-  *
-  * @param {Element} the diff element to inspect
-  * @return {String} the name of the file the diff represents
-  */
-  getFileNameForDiff: function(diffElem) {
-    const fileHeader = diffElem.getElementsByClassName('file-header').item(0);
-    return fileHeader.getAttribute('data-path');
-  }
+  /** Loads the PR JSON from the given URL.
+   *
+   * @private
+   * @param {String} the API url from which to fetch the PR JSON
+   * @param {Function} a callback function that takes the PR data JSON
+   */
+  loadPRData: function(prUrl, prHandlerFunction) {
+    return git_helper.fetchAsJson(prUrl, prHandlerFunction);
+  },
 
-}
+  /** Retrieve the API URL to use for this PR, based
+   *  on the page's URL.
+   *
+   * @private
+   * @param {String} the browser URL from which to derive the API url
+   * @return {String} the API URL for this PR.
+   */
+  getPRAPIURL: function(browserUrl) {
+    const urlParts = git_helper.splitUrl(browserUrl);
+    return [git_helper.getRepoAPIURL(browserUrl), 'pulls', urlParts[6]].join(prisk.constants.URL_SLASH);
+  },
+
+  /** Retrieve the repos URL for this PR URL.
+   *  e.g., https://github.va.opower.it/opower/archmage/pull/516
+   *     -> https://github.va.opower.it/repos/opower/archmage
+   */
+   getRepoAPIURL: function(documentUrl) {
+     const urlParts = git_helper.splitUrl(documentUrl);
+     return [git_helper.getAPIRootURL(documentUrl), 'repos', urlParts[3], urlParts[4]].join(prisk.constants.URL_SLASH);
+   },
+
+   /** Get the search API URL as derived from the passed-in URL.
+    *
+    * @private
+    * @param {String} the base URL of the page
+    * @return {String} the search API base.
+    */
+  getSearchAPIURL: function(documentURL) {
+    return [git_helper.getAPIRootURL(documentURL), 'search', 'issues'].join(prisk.constants.URL_SLASH);
+  },
+
+  /** Returns the various URL components of the passed-in URL.
+   *
+   * @private
+   * @param {String} the URL to parse
+   * @return {Array} the components of the URL split on /
+   */
+  splitUrl: function(url) {
+    return url.split(prisk.constants.URL_SLASH);
+  }
+};

@@ -7,6 +7,9 @@ of some things that might warrant extra time in the code review. This isn't a re
 for a thorough code review, just a set of flags that you should consider when
 doing a code review.
 
+
+Images designed by Freepik
+
 Installing
 ==========
 
@@ -20,7 +23,9 @@ Known Bugs
 ==========
 
   * When visiting a PR from the top-level "Pull Requests" page for a repo, the script doesn't run. Reload the page with the PR to make it run.
+  * Some PRs don't display the information. It's unclear what the pattern is.
   * Error handling is minimal.
+  * No tests. I'm still learning JavaScript test frameworks.
 
 What Research?
 ==============
@@ -72,7 +77,3 @@ Provide a top-level risk analysis of PRs
 Provide a per-file (or per-diff) risk analysis
 ----------------------------------------------
   * Sparkline for commits on file over time
-
-Misc.
------
-  * Support arbitrary domains so it can be used with github.com or enterprise github
