@@ -8,10 +8,10 @@ const ui = {
    * @private
    */
   configureUI: function() {
-     const headerPane = document.getElementById(prisk.getPRPanelId_());
+     const headerPane = document.getElementById('partial-discussion-header');
 
      const resultsTable = ui.appendTopLevelRiskTableToDiff(headerPane, 'PRisk Overall Assessment');
-     resultsTable.id = prisk.constants_.RESULTS_ID;
+     resultsTable.id = prisk.constants.RESULTS_ID;
 
      Object.keys(config.OVERALL_FIELD_TO_DESCRIPTION).forEach( function(item) {
        const tr = document.createElement('tr');
@@ -22,7 +22,7 @@ const ui = {
        const valueTd = document.createElement('td');
        valueTd.id = config.OVERALL_FIELD_TO_DESCRIPTION[item].id;
        valueTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
-       valueTd.appendChild(document.createTextNode(prisk.constants_.LOADING_STATUS));
+       valueTd.appendChild(document.createTextNode(prisk.constants.LOADING_STATUS));
 
        tr.appendChild(descTd);
        tr.appendChild(valueTd);
@@ -38,7 +38,7 @@ const ui = {
    * @private
    */
   configureDiffsUI: function() {
-    const diffDivs = ui.getDiffElements_();
+    const diffDivs = ui.getDiffElements();
 
     // diffDivs is an array, because that's what getDiffElements_ returns
     diffDivs.forEach( function(diff) {
@@ -69,29 +69,27 @@ const ui = {
    *
    * @return the HTMLCollection representing all the file diffs.
    */
-  getDiffElements_: function() {
+  getDiffElements: function() {
 
-    const filesContainer = document.getElementById(prisk.constants_.FILES_DIV);
+    const filesContainer = document.getElementById(prisk.constants.FILES_DIV);
     // TODO: why is this sometimes null?
     // https://github.va.opower.it/x-web-widgets/widget-data-browser/pull/272
     if (filesContainer == null) {
       return [];
     }
 
-    const fileElems = filesContainer.getElementsByClassName(prisk.constants_.FILE_DIV);
+    const fileElems = filesContainer.getElementsByClassName(prisk.constants.FILE_DIV);
 
-    return prisk.htmlCollectionFilter_(fileElems, function excludeRegexes(fileElem) {
+    return util.htmlCollectionFilter(fileElems, function excludeRegexes(fileElem) {
 
       // if there's a regex that matches the string, that string should not be included.
       const foundMatch = config.excludedFileRegexes.find( function findMatch(regex) {
-        return regex.exec(git_helper.getFileNameForDiff(fileElem)) !== null;
+        return regex.exec(ui.getFileNameForDiff(fileElem)) !== null;
       });
 
       return foundMatch === undefined;
     });
   },
-
-
 
   /** Creates the basic assessment table with a header and appends it to
    *  the specified diff.
@@ -135,7 +133,7 @@ const ui = {
     * @param {Element} element to update
     * @param {String} risk assessment as a string
     */
-   setTextRiskAssessmentCell_: function(riskElem, riskAssessment) {
+   setTextRiskAssessmentCell: function(riskElem, riskAssessment) {
      const metricTextSpan = document.createElement('span');
      metricTextSpan.setAttribute('class', 'prisk-risk-' + riskAssessment);
      metricTextSpan.appendChild(document.createTextNode(riskAssessment));
@@ -149,15 +147,22 @@ const ui = {
     * @param {Object} a configuration for the risk assessment being set
     * @param {String} LOW, MEDIUM, or HIGH
     */
-   setImageRiskAssessmentCell_: function(riskFieldElem, riskConfiguration, riskAssessment) {
+   setImageRiskAssessmentCell: function(riskFieldElem, riskConfiguration, riskAssessment) {
      const newImage = document.createElement('img');
      newImage.setAttribute('src', chrome.extension.getURL('images/' + riskConfiguration.id + '-' + riskAssessment + '.png') );
      const altText = riskConfiguration.description + ': ' + riskAssessment;
      newImage.setAttribute('alt', altText);
      newImage.setAttribute('title', altText);
      riskFieldElem.replaceChild(newImage, riskFieldElem.firstChild);
-   }
+   },
 
-
-
+   /** For a given file diff, figure out the the name of the file being represented
+    *
+    * @param {Element} the diff element to inspect
+    * @return {String} the name of the file the diff represents
+    */
+    getFileNameForDiff: function(diffElem) {
+      const fileHeader = diffElem.getElementsByClassName('file-header').item(0);
+      return fileHeader.getAttribute('data-path');
+    }
 };
