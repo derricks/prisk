@@ -145,5 +145,17 @@ const git_helper = {
    */
   splitUrl: function(url) {
     return url.split(prisk.constants.URL_SLASH);
-  }
+  },
+
+  /** Returns whether or not this is a git PR page based on
+   *  the presence or absence of a diff with ID partial-discussion-header'
+   *
+   * @param {String} diff name to find.
+   * @return {Boolean} true if the diff is present, false if not.
+   */
+   isPRDiffPresent: function(diffName) {
+     const diffElem = document.getElementById(diffName);
+     return diffElem !== undefined && diffElem !== null;
+   }
+
 };
