@@ -3,6 +3,8 @@
 
 const ui = {
 
+  PRISK_TABLE_STYLES: 'prisk-text-default prisk-table-cell-defaults',
+
   /** This configures the dom elements in the UI.
    *
    */
@@ -15,12 +17,12 @@ const ui = {
      Object.keys(config.OVERALL_FIELD_TO_DESCRIPTION).forEach( function(item) {
        const tr = document.createElement('tr');
        const descTd = document.createElement('td');
-       descTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
+       descTd.setAttribute('class', ui.PRISK_TABLE_STYLES);
        descTd.appendChild(document.createTextNode(config.OVERALL_FIELD_TO_DESCRIPTION[item].description));
 
        const valueTd = document.createElement('td');
        valueTd.id = config.OVERALL_FIELD_TO_DESCRIPTION[item].id;
-       valueTd.setAttribute('class', 'prisk-text-default prisk-table-cell-defaults');
+       valueTd.setAttribute('class', ui.PRISK_TABLE_STYLES);
        valueTd.appendChild(document.createTextNode(prisk.constants.LOADING_STATUS));
 
        tr.appendChild(descTd);
