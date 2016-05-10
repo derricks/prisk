@@ -8,6 +8,10 @@ const prisk = {
    *  @public
    */
   createRiskAssessment: function() {
+    if (!git_helper.isPRDiffPresent(prisk.constants.PR_DIFF_DIV_ID)) {
+      return;
+    }
+
     ui.configureUI();
 
     git_helper.fetchAsJson(git_helper.getPRAPIURL(window.location.href), function(prData) {
@@ -271,7 +275,8 @@ const prisk = {
     FILES_DIV: 'files',
     FILE_DIV: 'file',
     LOADING_STATUS: 'Loading',
-    MILLIS_PER_DAY: 24 * 60 * 60 * 1000
+    MILLIS_PER_DAY: 24 * 60 * 60 * 1000,
+    PR_DIFF_DIV_ID: 'partial-discussion-header'
   }
 };
 

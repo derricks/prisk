@@ -5,10 +5,9 @@ const ui = {
 
   /** This configures the dom elements in the UI.
    *
-   * @private
    */
   configureUI: function() {
-     const headerPane = document.getElementById('partial-discussion-header');
+     const headerPane = document.getElementById(prisk.constants.PR_DIFF_DIV_ID);
 
      const resultsTable = ui.appendTopLevelRiskTableToDiff(headerPane, 'PRisk Overall Assessment');
      resultsTable.id = prisk.constants.RESULTS_ID;
@@ -31,11 +30,11 @@ const ui = {
      headerPane.appendChild(resultsTable);
 
      ui.configureDiffsUI();
+     return true;
   },
 
   /** Adds a risk assessment panel to each of the diffs.
    *
-   * @private
    */
   configureDiffsUI: function() {
     const diffDivs = ui.getDiffElements();
