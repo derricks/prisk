@@ -3,7 +3,7 @@
 
   "name": "PRisk",
   "description": "Add risk analysis to git PRs",
-  "version": "0.5.7",
+  "version": "0.5.8",
   "author": "Derrick Schneider <derrick.schneider@opower.com>",
 
   "content_scripts": [

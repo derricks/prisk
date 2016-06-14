@@ -20,7 +20,7 @@ const git_helper = {
   // Fetch a given URL, interpret as JSON, and call the
   // handler function.
   fetchAsJson: function(url, resultsFunction) {
-    return fetch(url).then(git_helper.json).then(resultsFunction);
+    return fetch(url, git_helper.getFetchOptions()).then(git_helper.json).then(resultsFunction);
   },
 
   /** Accumulate results from a given URL, and paginate if necessary
@@ -33,7 +33,7 @@ const git_helper = {
    * @return {Array} the set of JSON results added to the starting array
    */
   accumulateJSONResults: function(startArray, url, callback, shouldContinue) {
-    return fetch(url).then(function parseResponse(response) {
+    return fetch(url, git_helper.getFetchOptions() ).then(function parseResponse(response) {
 
       const linkHeader = response.headers.get('Link');
       const nextLink = git_helper.parseNextLinkFromLinkHeader(linkHeader);
@@ -156,6 +156,19 @@ const git_helper = {
    isPRDiffPresent: function(diffName) {
      const diffElem = document.getElementById(diffName);
      return diffElem !== undefined && diffElem !== null;
-   }
+   },
+
+   /** Return the fetch object needed for making calls to the server.
+    *
+    * @return the object to use for fetch parameters
+    */
+    getFetchOptions: function() {
+      return config.auth_token && config.username ?
+      {
+        headers: {
+          'Authorization': 'Basic ' + btoa(config.username + ':' + config.auth_token)
+        }
+      } : {}
+    }
 
 };
