@@ -169,6 +169,16 @@ const git_helper = {
           'Authorization': 'Basic ' + btoa(config.username + ':' + config.auth_token)
         }
       } : {}
-    }
+    },
+
+    /** Gets the commits API url given a specific filename.
+     *
+     * @param {String} the file name to retrieve commits for
+     * @return {String} a URL that can be used to fetch commits for that file
+     */
+     getCommitsURLForFile(filename) {
+       return git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + filename;
+     }
+
 
 };
