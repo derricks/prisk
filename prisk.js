@@ -64,7 +64,7 @@ const prisk = {
 
      // 90 days ago
      const threeMonthsAgo = util.getNDaysAgo(90);
-     git_helper.collectAllCommitData(git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
+     git_helper.collectAllCommitData(git_helper.getCommitsURLForFile(fileName) + '&since=' + threeMonthsAgo.toISOString(), function(results) {
        prisk.setRiskInDiff(diffElem, results.length, config.DIFF_FIELD_TO_DESCRIPTION.FILE_VOLATILITY_RISK);
      });
    },
@@ -75,7 +75,7 @@ const prisk = {
    calculateAndShowAuthorVolatilityRisk: function(diffElem) {
      const threeMonthsAgo = util.getNDaysAgo(90);
      const fileName = ui.getFileNameForDiff(diffElem);
-     git_helper.collectAllCommitData(git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + fileName + '&since=' + threeMonthsAgo.toISOString(), function(results) {
+     git_helper.collectAllCommitData(git_helper.getCommitsURLForFile(fileName) + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
        const authors = results.map( function(commit) {
          return commit.commit.author.name;
@@ -101,7 +101,7 @@ const prisk = {
      // we can stop fetching results
      const safeDate = util.getNDaysAgo(config.DIFF_FIELD_TO_DESCRIPTION.FILE_YOUTH_RISK.safeDaysBack);
 
-     git_helper.collectAllCommitData(git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + filename,
+     git_helper.collectAllCommitData(git_helper.getCommitsURLForFile(filename),
        function(commits) {
 
          const commitDates = commits.map( function timestampsOnly(commit) {
@@ -136,6 +136,37 @@ const prisk = {
     });
 
    },
+
+   /** Given a file, figure out who the most likely owners are by looking at the last 50 commits
+    *
+    * @param {Element} the diff element to populate
+    */
+    calculateOwners: function(diffElem) {
+      const filename = ui.getFileNameForDiff(diffElem);
+
+      git_helper.collectAllCommitData(git_helper.getCommitsURLForFile(filename),
+        function retrieveAuthors(commits) {
+
+          const allAuthors = commits.map( commit => commit.commit.author.name );
+          const authorCounts = allAuthors.reduce(
+            function countAuthors(currentView, currentAuthor) {
+              currentView[currentAuthor] = (currentView[currentAuthor] ? currentView[currentAuthor] + 1 : 1);
+              return currentView;
+            }, []
+          );
+
+          const authorCountTuples = Object.keys(authorCounts).map( author => [author, authorCounts[author]]);
+          authorCountTuples.sort( (left, right) => left[1] > right[1] ? -1 : (left[1] < right[1] ? 1 : 0) );
+          const topTwo = authorCountTuples.slice(0,2).map( tuple => tuple[0] );
+
+          // now find the authors div and append the text
+          const diffAuthorDiv = document.getElementById(diffElem.id + '-' + prisk.constants.PR_DIFF_OWNER_DIV_ID);
+          diffAuthorDiv.appendChild(document.createTextNode('Owners: ' + topTwo.toString()));
+
+        }, function(commits) { return commits.length < 50; }
+      );
+    },
+
 
    /** Given a diff representing a file, return the maximum complexity
     * as defined by the number of unique indent levels, which is a stand-in
@@ -264,6 +295,9 @@ const prisk = {
         prisk.calculateAndShowAuthorVolatilityRisk(diffElem);
 
         prisk.calculateAndShowFileYouthRisk(diffElem);
+
+        prisk.calculateOwners(diffElem);
+
      });
    },
 
@@ -276,7 +310,8 @@ const prisk = {
     FILE_DIV: 'file',
     LOADING_STATUS: 'Loading',
     MILLIS_PER_DAY: 24 * 60 * 60 * 1000,
-    PR_DIFF_DIV_ID: 'partial-discussion-header'
+    PR_DIFF_DIV_ID: 'partial-discussion-header',
+    PR_DIFF_OWNER_DIV_ID: 'prisk-owner-list'
   }
 };
 

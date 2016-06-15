@@ -62,6 +62,11 @@ const ui = {
         riskIconElem.appendChild(riskImgElem);
         trElem.appendChild(riskIconElem);
       });
+
+     // add in the authors field: people who are good to tag for the file
+     authorsFieldElem = document.createElement('td');
+     authorsFieldElem.setAttribute('id', diff.id + '-' + prisk.constants.PR_DIFF_OWNER_DIV_ID);
+     trElem.appendChild(authorsFieldElem);
     });
 
   },
