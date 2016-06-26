@@ -20,7 +20,9 @@ const git_helper = {
   // Fetch a given URL, interpret as JSON, and call the
   // handler function.
   fetchAsJson: function(url, resultsFunction) {
-    return fetch(url, git_helper.getFetchOptions()).then(git_helper.json).then(resultsFunction);
+    git_helper.getFetchOptions().then( function(credentials) {
+      return fetch(url, credentials).then(git_helper.json).then(resultsFunction);
+    });
   },
 
   /** Accumulate results from a given URL, and paginate if necessary
@@ -33,19 +35,21 @@ const git_helper = {
    * @return {Array} the set of JSON results added to the starting array
    */
   accumulateJSONResults: function(startArray, url, callback, shouldContinue) {
-    return fetch(url, git_helper.getFetchOptions() ).then(function parseResponse(response) {
+    return git_helper.getFetchOptions().then( function(credentials) {
+      return fetch(url, credentials ).then(function parseResponse(response) {
 
-      const linkHeader = response.headers.get('Link');
-      const nextLink = git_helper.parseNextLinkFromLinkHeader(linkHeader);
+        const linkHeader = response.headers.get('Link');
+        const nextLink = git_helper.parseNextLinkFromLinkHeader(linkHeader);
 
-      // once the json is parsed, if there's a next link, recurse
-      return response.json().then( function(json) {
-        const newResults = startArray.concat(json);
-        if (!(shouldContinue === undefined || shouldContinue(newResults))) {
-          return newResults;
-        }
+        // once the json is parsed, if there's a next link, recurse
+        return response.json().then( function(json) {
+          const newResults = startArray.concat(json);
+          if (!(shouldContinue === undefined || shouldContinue(newResults))) {
+            return newResults;
+          }
 
-        return nextLink === null ? newResults : git_helper.accumulateJSONResults(newResults, nextLink);
+          return nextLink === null ? newResults : git_helper.accumulateJSONResults(newResults, nextLink);
+        });
       });
     });
   },
@@ -153,32 +157,49 @@ const git_helper = {
    * @param {String} diff name to find.
    * @return {Boolean} true if the diff is present, false if not.
    */
-   isPRDiffPresent: function(diffName) {
+  isPRDiffPresent: function(diffName) {
      const diffElem = document.getElementById(diffName);
      return diffElem !== undefined && diffElem !== null;
    },
 
    /** Return the fetch object needed for making calls to the server.
     *
-    * @return the object to use for fetch parameters
+    * @return a Promise object that will yield the credential parameters
     */
-    getFetchOptions: function() {
-      return config.auth_token && config.username ?
-      {
-        headers: {
-          'Authorization': 'Basic ' + btoa(config.username + ':' + config.auth_token)
-        }
-      } : {}
-    },
+  getFetchOptions: function() {
+    return git_helper.getCredentialsForHost().then( function (credentials) {
 
-    /** Gets the commits API url given a specific filename.
-     *
-     * @param {String} the file name to retrieve commits for
-     * @return {String} a URL that can be used to fetch commits for that file
-     */
-     getCommitsURLForFile(filename) {
-       return git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + filename;
-     }
+        return credentials != undefined ?
+        {
+          headers: {
+            'Authorization': 'Basic ' + btoa(credentials.username + ':' + credentials.auth_token)
+          }
+        } : {};
+    });
+  },
 
+  /** Gets the commits API url given a specific filename.
+   *
+   * @param {String} the file name to retrieve commits for
+   * @return {String} a URL that can be used to fetch commits for that file
+    */
+  getCommitsURLForFile: function(filename) {
+    return git_helper.getRepoAPIURL(document.location.href) + '/commits?path=' + filename;
+  },
 
+  /** Return the credentials for the user for this github host.
+   *
+   * @return {Object} a new Promise object containing accress credentials for the root URL, or undefined if it can't be found.
+   */
+  // todo: error handling should reject
+  getCredentialsForHost: function() {
+    const apiUrl = git_helper.getAPIRootURL(document.location.href);
+
+    return new Promise(
+      function(resolve, reject) {
+        chrome.storage.sync.get('access_info', function(dictionary) {
+          resolve(dictionary.access_info.find( (item, index, array) => item.github_url == apiUrl));
+        });
+      });
+    }
 };

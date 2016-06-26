@@ -3,8 +3,13 @@
 
   "name": "PRisk",
   "description": "Add risk analysis to git PRs",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "author": "Derrick Schneider <derrick.schneider@opower.com>",
+
+  "browser_action": {
+    "default_popup": "popup/credentials.html",
+    "default_title": "PRisk configuration"
+  },
 
   "content_scripts": [
     {
@@ -21,7 +26,8 @@
   "permissions": [
     "activeTab",
     "http://*/*",
-    "https://*/*"
+    "https://*/*",
+    "storage"
   ]
 
 
