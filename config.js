@@ -76,8 +76,5 @@ const config = {
       // if any date in the result is older than this, we can stop looking
       safeDaysBack: 30
     }
-  },
-
-  username: 'derricks',
-  auth_token: '2a5753648a7bc3c121a7f92e6cb23fa9c2018ba1'
+  }
 };
