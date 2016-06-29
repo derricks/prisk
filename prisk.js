@@ -8,7 +8,7 @@ const prisk = {
    *  @public
    */
   createRiskAssessment: function() {
-    if (!git_helper.isPRDiffPresent(prisk.constants.PR_DIFF_DIV_ID)) {
+    if (!prisk._shouldRunPrisk()) {
       return;
     }
 
@@ -301,6 +301,16 @@ const prisk = {
      });
    },
 
+   /** Determines whether prisk should run. This is based on whether it's on a github site (if yes, run)
+    *  and whether the prisk divs have already been put into place (if yes, don't run.)
+    *
+    * @return {Boolean} whether prisk should run.
+    */
+  _shouldRunPrisk: function() {
+    return git_helper.isPRDiffPresent(prisk.constants.PR_DIFF_DIV_ID) &&
+          !git_helper.isPRDiffPresent(prisk.constants.RESULTS_ID);
+    },
+
   constants: {
     URL_SLASH: '/',
     RESULTS_ID: 'prisk-overall-risk-results',
@@ -317,3 +327,8 @@ const prisk = {
 
 
 prisk.createRiskAssessment();
+
+// register for messages from our background page
+chrome.runtime.onMessage.addListener( function(event) {
+  if (event.xhr_event) {prisk.createRiskAssessment()}
+});
