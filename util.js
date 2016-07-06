@@ -56,5 +56,29 @@ const util = {
     }
   },
 
+  /** Given an array of Strings, count the number of times each string appears in the list.
+   *
+   * @param {Array} strings to check
+   * @return {Array} an associative array where each key is one of the strings passed in and its value is the number of times
+   *         that string appeared in the array.
+   */
+   countCopiesOfStringInArray: function(stringsToCount) {
+     return stringsToCount.reduce(
+       function countStrings(currentView, currentString) {
+         currentView[currentString] = (currentView[currentString] ? currentView[currentString] + 1 : 1);
+         return currentView;
+       }, []
+     );
+   },
+
+   /** Given an associative array of keys to an integer, return an array of tuples
+    *  where tuple[0] is the key and tuple[1] is the integer.
+    *
+    * @param {Array} associative array of key to integer
+    * @return {Array} an array where each item is another array where item 0 is the key and item 1 is the count
+    */
+    stringsAndCountsToTuples: function(stringToIntegerArray) {
+      return Object.keys(stringToIntegerArray).map( key => [key, stringToIntegerArray[key]]);
+    }
 
 };
