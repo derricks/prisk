@@ -146,8 +146,10 @@ const prisk = {
           const topTwo = authorsAndCounts.slice(0,2).map( tuple => tuple[0] );
 
           // now find the authors div and append the text
-          const diffAuthorDiv = document.getElementById(diffElem.id + '-' + prisk.constants.PR_DIFF_OWNER_DIV_ID);
-          diffAuthorDiv.appendChild(document.createTextNode('Owners: ' + topTwo.toString()));
+          if (topTwo.length != 0) { // new file, no owners. todo: this is using a side effect to guess behavior
+            const diffAuthorDiv = document.getElementById(diffElem.id + '-' + prisk.constants.PR_DIFF_OWNER_DIV_ID);
+            diffAuthorDiv.appendChild(document.createTextNode('Owners: ' + topTwo.toString()));
+          }
 
         }, function(commits) { return commits.length < 50; }
       );
