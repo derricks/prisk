@@ -201,5 +201,21 @@ const git_helper = {
           resolve(dictionary.access_info.find( (item, index, array) => item.github_url == apiUrl));
         });
       });
-    }
+  },
+
+  /** Given a list of commits, derive the authors and how many times
+   *  they've made one of the commits in the set.
+   *
+   * @param {Array} a list of commit objects
+   * @return {Array} an array of elements of the form [Author, Count]
+   */
+  getAuthorsAndCommitCountsFromCommits: function(commits) {
+    const allAuthors = commits.filter(commit => commit.commit !== undefined && commit.commit.author !== undefined && commit.commit.author.name !== undefined).
+      map( commit => commit.commit.author.name );
+
+    const authorCounts = util.countCopiesOfStringInArray(allAuthors);
+
+    return util.stringsAndCountsToTuples(authorCounts);
+  }
+
 };

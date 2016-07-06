@@ -77,16 +77,10 @@ const prisk = {
      const fileName = ui.getFileNameForDiff(diffElem);
      git_helper.collectAllCommitData(git_helper.getCommitsURLForFile(fileName) + '&since=' + threeMonthsAgo.toISOString(), function(results) {
 
-       const authors = results.map( function(commit) {
-         return commit.commit.author.name;
-       });
-
-       const uniqueAuthors = [];
-       authors.forEach( function(author) {
-         uniqueAuthors[author] = true;
-       });
-
-       prisk.setRiskInDiff(diffElem, Object.keys(uniqueAuthors).length, config.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
+       // note that the nature of this result is that each item in the array
+       // represents a unique author
+       const authors = git_helper.getAuthorsAndCommitCountsFromCommits(results);
+       prisk.setRiskInDiff(diffElem, Object.keys(authors).length, config.DIFF_FIELD_TO_DESCRIPTION.AUTHOR_VOLATILITY_RISK);
      });
    },
 
@@ -147,17 +141,9 @@ const prisk = {
       git_helper.collectAllCommitData(git_helper.getCommitsURLForFile(filename),
         function retrieveAuthors(commits) {
 
-          const allAuthors = commits.map( commit => commit.commit.author.name );
-          const authorCounts = allAuthors.reduce(
-            function countAuthors(currentView, currentAuthor) {
-              currentView[currentAuthor] = (currentView[currentAuthor] ? currentView[currentAuthor] + 1 : 1);
-              return currentView;
-            }, []
-          );
-
-          const authorCountTuples = Object.keys(authorCounts).map( author => [author, authorCounts[author]]);
-          authorCountTuples.sort( (left, right) => left[1] > right[1] ? -1 : (left[1] < right[1] ? 1 : 0) );
-          const topTwo = authorCountTuples.slice(0,2).map( tuple => tuple[0] );
+          const authorsAndCounts = git_helper.getAuthorsAndCommitCountsFromCommits(commits);
+          authorsAndCounts.sort( (left, right) => left[1] > right[1] ? -1 : (left[1] < right[1] ? 1 : 0) );
+          const topTwo = authorsAndCounts.slice(0,2).map( tuple => tuple[0] );
 
           // now find the authors div and append the text
           const diffAuthorDiv = document.getElementById(diffElem.id + '-' + prisk.constants.PR_DIFF_OWNER_DIV_ID);
@@ -329,6 +315,8 @@ const prisk = {
 prisk.createRiskAssessment();
 
 // register for messages from our background page
-chrome.runtime.onMessage.addListener( function(event) {
-  if (event.xhr_event) {prisk.createRiskAssessment()}
-});
+if (chrome.runtime.onMessage) {
+  chrome.runtime.onMessage.addListener( function(event) {
+    if (event.xhr_event) {prisk.createRiskAssessment()}
+  });
+}
