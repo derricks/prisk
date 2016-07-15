@@ -2,6 +2,36 @@
 
 const prisk = {
 
+  /** Do any initialization work needed for when the plugin
+   *  is first installed. All operations should be no-op if
+   *  the relevant initialization has happened already.
+   */
+   init: function() {
+     if (chrome && chrome.storage && chrome.storage.sync) {
+       prisk._initStorage(chrome.storage.sync);
+     }
+   },
+
+   /** Initializes the storage for prisk.
+    *
+    * @param {Object} object representing the storage system for the browser
+    */
+   _initStorage: function(storage) {
+     storage.get(prisk.constants.STORAGE_KEY, function(items) {
+       if (items && items.access_info === undefined) {
+         storage.set(
+           {access_info: [
+               { github_url: 'https://api.github.com',
+                 username: '',
+                 auth_token: ''
+               }
+             ]
+           }
+         );
+       }
+     });
+   },
+
   /** This serves as the main entry point for this object.
    *  The page calls this to start the risk assessment.
    *
@@ -34,7 +64,8 @@ const prisk = {
 
     // with that kicked off, calculate the average max complexity
     prisk.setMetricField(config.OVERALL_FIELD_TO_DESCRIPTION.AVG_MAX_COMPLEXITY,
-      prisk.calculateAverageMaxComplexity());
+      prisk.calculateAverageMaxComplexity()
+    );
   },
 
   /** Calculate the average max complexity of the PR
@@ -309,10 +340,15 @@ const prisk = {
     LOADING_STATUS: 'Loading',
     MILLIS_PER_DAY: 24 * 60 * 60 * 1000,
     PR_DIFF_DIV_ID: 'partial-discussion-header',
-    PR_DIFF_OWNER_DIV_ID: 'prisk-owner-list'
+    PR_DIFF_OWNER_DIV_ID: 'prisk-owner-list',
+    STORAGE_KEY: 'access_info'
+
   }
 };
 
+// if there's no storage already in place, add a default entry
+// for https://spi.github.com
+prisk.init();
 
 prisk.createRiskAssessment();
 

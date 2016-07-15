@@ -73,7 +73,7 @@ function saveValuesFromEditor(editorElem) {
       // add
       fullDictionary.access_info.push(
         {
-          github_site: urlFieldValue,
+          github_url: urlFieldValue,
           username: usernameFieldValue,
           auth_token: tokenFieldValue
         }

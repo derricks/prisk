@@ -197,7 +197,7 @@ const git_helper = {
 
     return new Promise(
       function(resolve, reject) {
-        chrome.storage.sync.get('access_info', function(dictionary) {
+        chrome.storage.sync.get(prisk.STORAGE_KEY, function(dictionary) {
           resolve(dictionary.access_info.find( (item, index, array) => item.github_url == apiUrl));
         });
       });
