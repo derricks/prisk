@@ -1,7 +1,7 @@
 # PRisk
 This is a Chrome plugin that provides some risk heuristics based on characteristics of a github PR.
 
-It's based on research I've read about various forms of defect prediction. Of course,
+It's based on academic research about various forms of defect prediction. Of course,
 all heuristics are simply guidelines. They're there just to give you a quick sense
 of some things that might warrant extra time in the code review. This isn't a replacement
 for a thorough code review, just a set of flags that you should consider when
@@ -19,17 +19,14 @@ Installing
   4. Click "Load unpacked extension..."
   5. Select the directory where you cloned the repo
 
-Known Bugs
-==========
+If you need to access private repos, you need to also generate a key that the
+extension can use for queries. See [github's help about this](https://help.github.com/articles/creating-an-access-token-for-command-line-use/) topic. Once you've generated and copied the token, click on the P icon. This will bring up a list of github credentials. Click on api.github.com, and edit the information accordingly.
 
-  * When visiting a PR from the top-level "Pull Requests" page for a repo, the script doesn't run. Reload the page with the PR to make it run.
-  * Some PRs don't display the information. It's unclear what the pattern is.
-  * Error handling is minimal.
-  * No tests. I'm still learning JavaScript test frameworks.
+I admit the UI here is not great. I accept pull requests.
 
 What Research?
 ==============
-Some of the work that has inspired and informed this:
+Some -- though not all! -- of the work that has inspired and informed this:
   * Predicting Risk of Software Changes - Audris Mockus and David M. Weiss
   * Reading Beside the Lines: Indentation as a Proxy for Complexity Metrics - Abram Hindle, Michael Godfrey, Richard Holt
   * _Your Code As a Crime Scene_, Adam Tornhill
@@ -65,6 +62,8 @@ The following risk factors are currently called out:
     * Author volatility. Files with numerous recent contributors are more prone to defects.
     * File youth. New files typically have more defects.
 
+In addition, the extension will try to figure out who the most knowledgeable people are for any given file. The top two authors of the last 50 commits will be shown.
+
 What's Planned
 ==============
 
@@ -77,3 +76,4 @@ Provide a top-level risk analysis of PRs
 Provide a per-file (or per-diff) risk analysis
 ----------------------------------------------
   * Sparkline for commits on file over time
+  * File size
