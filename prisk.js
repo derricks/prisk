@@ -11,7 +11,7 @@ const prisk = {
        prisk._initStorage(chrome.storage.sync);
      }
    },
-
+ 
    /** Initializes the storage for prisk.
     *
     * @param {Object} object representing the storage system for the browser

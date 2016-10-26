@@ -12,3 +12,4 @@ if (chrome.webRequest) {
     });
   }, {urls:["http://*/*", "https://*/*"], types: ["xmlhttprequest"]});
 }
+ 
