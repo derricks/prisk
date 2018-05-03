@@ -186,6 +186,16 @@ const prisk = {
       );
     },
 
+    /** Given a file, figure out the other files it has often been in commits with over
+     *  the last 3 months.
+     *
+     * @param {String} file name within the repo
+     * @return {Array} the list of files this file has often been in commits with
+     */
+     calculateLinkedFiles: function(filePath) {
+
+     },
+
 
    /** Given a diff representing a file, return the maximum complexity
     * as defined by the number of unique indent levels, which is a stand-in

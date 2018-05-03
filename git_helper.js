@@ -216,6 +216,26 @@ const git_helper = {
     const authorCounts = util.countCopiesOfStringInArray(allAuthors);
 
     return util.stringsAndCountsToTuples(authorCounts);
-  }
+  },
+
+  /** Given a file, figure out the other files it has often been in commits with over
+   *  the last 3 months.
+   *
+   * @param {String} file name within the repo
+   * @return {Array} the list of files this file has often been in commits with
+   */
+   calculateLinkedFiles: function(filePath) {
+       // get the  commits for this file
+       const threeMonthsAgo = util.getNDaysAgo(90);
+       git_helper.collectAllCommitData(git_helper.getCommitsURLForFile(filePath) + '&since=' + threeMonthsAgo.toISOString(),
+         function(commits) {
+           commit_urls = commits.map( commit => commit.commit.url)
+           // for each commit, get the "detailed" view so that we can extract the files
+
+         });
+
+   },
+
+
 
 };
