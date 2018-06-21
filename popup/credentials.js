@@ -5,6 +5,9 @@ const CAPTURE_EVENTS = {capture: true};
 const EDITOR_ID = 'credential_editor';
 const BROWSER_ID = 'credential_browser';
 
+const DEFAULT_DICT = {'github_url': 'https://api.github.com','username': 'your_username', 'auth_token': 'token'};
+
+
 /** Load the credentials from storage
   * and display a full list.
   */
@@ -16,6 +19,10 @@ function loadCredentials() {
   _clearChildren(browserElem);
 
   chrome.storage.sync.get(ACCESS_INFO_KEY, function(fullDictionary) {
+    if (!fullDictionary.access_info || fullDictionary.access_info.length == 0) {
+      fullDictionary.access_info = [DEFAULT_DICT]
+    }
+    
     fullDictionary.access_info.forEach( function createDivs(credentials) {
        const credentialsElem = document.createElement('div');
        credentialsElem.id = credentials.github_url;
@@ -34,7 +41,7 @@ function loadCredentials() {
 function showEditingPane(id) {
   chrome.storage.sync.get(ACCESS_INFO_KEY, function(fullDictionary) {
 
-    const credentials = fullDictionary.access_info.find(item => item.github_url === id)
+    const credentials = fullDictionary.access_info ? fullDictionary.access_info.find(item => item.github_url === id) : DEFAULT_DICT
 
     if (credentials === undefined) {
       // this seems highly unlikely, as the person clicked on an item in the list
@@ -67,7 +74,12 @@ function saveValuesFromEditor(editorElem) {
 
   // first get the current view of credentials
   chrome.storage.sync.get(ACCESS_INFO_KEY, function(fullDictionary) {
-    const currentCredentials = fullDictionary.access_info.find( item => item.github_url === urlFieldValue);
+    if (!fullDictionary.accessInfo) {
+      fullDictionary.access_info = []
+    }
+    
+    const currentCredentials = fullDictionary.access_info.find( item => item.github_url === urlFieldValue)
+                                                             
 
     if (currentCredentials === undefined) {
       // add

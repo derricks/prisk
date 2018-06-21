@@ -3,7 +3,7 @@
 
   "name": "PRisk",
   "description": "Add risk analysis to git PRs",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "author": "Derrick Schneider <derrick.schneider@gmail.com>",
 
   "browser_action": {
